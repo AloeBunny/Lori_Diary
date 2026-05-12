@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#A8D8BE">
+  <title>Pace</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Tab content renders here -->
+    <div id="tab-content"></div>
+
+    <!-- Bottom Tab Bar -->
+    <nav id="tab-bar">
+      <button class="tab active" data-tab="dashboard">
+        <span class="tab-icon">📊</span>
+        <span class="tab-label">儀表板</span>
+      </button>
+      <button class="tab" data-tab="general">
+        <span class="tab-icon">✅</span>
+        <span class="tab-label">一般</span>
+      </button>
+      <button class="tab" data-tab="routine">
+        <span class="tab-icon">⏱</span>
+        <span class="tab-label">Routine</span>
+      </button>
+      <button class="tab" data-tab="learning">
+        <span class="tab-icon">📖</span>
+        <span class="tab-label">學習</span>
+      </button>
+    </nav>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>
