@@ -1,229 +1,449 @@
-/* Pace — Color Palette from SPEC */
+/* 小蘿日誌 — Design Tokens + 全域樣式 + 元件樣式 */
+
+/* ===== Design Tokens ===== */
 :root {
-  --primary: #A8D8BE;       /* 薄荷鼠尾草 */
-  --accent: #9B7DB8;        /* 霧紫 */
-  --bg: #FAF8F3;            /* 象牙暖白 */
-  --dark: #1B3A5C;          /* 海軍藍 */
-  --text: #2D2D2D;
-  --text-light: #888;
-  --border: #E8E4DE;
-  --success: #6BBF8A;
-  --carrot: #F4845F;        /* 紅蘿蔔色 */
-  --heatmap-empty: #F2F0ED;
+  /* 主色票 */
+  --mint:    #A8D8BE;   /* 主色 · 薄荷鼠尾草 */
+  --violet:  #9B7DB8;   /* 強調色 · 霧紫 */
+  --bg:      #FAF8F3;   /* 背景 · 象牙暖白 */
+  --card:    #F0ECE2;   /* 卡片 · 奶油亞麻 */
+  --ink:     #3A3F47;   /* 主文字 · 墨炭 */
+  --wine:    #7B3B4C;   /* 暗強調 · 酒紅（急迫/刪除） */
+  --gray:    #B0ADA6;   /* 次要文字 · 溫灰 */
+  --green:   #81C9A3;   /* 成功 · 柔綠 */
+  --carrot:  #F4845F;   /* 紅蘿蔔色 */
+  --navy:    #1B3A5C;   /* 海軍藍（倒數字色） */
+
+  --hairline: #E8E4DE;  /* 分隔線 */
+  --ink-65:  rgba(58,63,71,0.65);   /* 次文字 65% */
+  --ink-45:  rgba(58,63,71,0.45);   /* 次文字 45% */
+
+  /* 熱力圖飽和 100% */
+  --hm-mint:     #4DC49A;
+  --hm-lavender: #7E57C2;
+  --hm-coral:    #E57373;
+  --hm-sky:      #4FC3F7;
+  --hm-sun:      #FFD54F;
+  --hm-peach:    #FFB74D;
+  --hm-rose:     #F06292;
+  --hm-sage:     #81C784;
+  --hm-navy:     #1B3A5C;
+  --hm-empty:    #F2F0ED;
 }
 
-* {
+/* ===== Reset ===== */
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* ===== 基底 ===== */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
 }
 
 #app {
   max-width: 430px;
   margin: 0 auto;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-#tab-content {
-  flex: 1;
-  padding: 16px;
-  padding-bottom: 80px;
-  overflow-y: auto;
-}
-
-/* Tab Bar */
-#tab-bar {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
   width: 100%;
-  max-width: 430px;
-  display: flex;
-  background: white;
-  border-top: 1px solid var(--border);
-  padding: 8px 0;
-  padding-bottom: env(safe-area-inset-bottom, 8px);
-  z-index: 100;
+  height: 100vh;
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
 }
 
-.tab {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 4px;
-  color: var(--text-light);
-  transition: color 0.2s;
-}
-
-.tab.active {
-  color: var(--primary);
-}
-
-.tab-icon {
-  font-size: 20px;
-}
-
-.tab-label {
-  font-size: 10px;
-  font-weight: 500;
-}
-
-/* Dashboard */
-.dashboard-header {
-  text-align: center;
-  padding: 20px 0;
-}
-
-.carrot-count {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--carrot);
-}
-
-.carrot-label {
-  font-size: 12px;
-  color: var(--text-light);
-}
-
-/* Progress Ring */
-.progress-ring {
-  width: 120px;
-  height: 120px;
-  margin: 16px auto;
-}
-
-/* Heatmap Mini */
-.heatmap-mini {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-  padding: 12px;
-  background: white;
-  border-radius: 12px;
-  margin-top: 16px;
-}
-
-.heatmap-cell {
-  aspect-ratio: 1;
-  border-radius: 3px;
-  background: var(--heatmap-empty);
-}
-
-/* TODO Items */
-.todo-list {
-  list-style: none;
-}
-
-.todo-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background: white;
-  border-radius: 12px;
-  margin-bottom: 8px;
-  border: 1px solid var(--border);
-}
-
-.todo-checkbox {
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--border);
-  border-radius: 50%;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.2s;
-}
-
-.todo-checkbox.checked {
-  background: var(--success);
-  border-color: var(--success);
-}
-
-.todo-title {
+/* ===== .lori 根元素 ===== */
+.lori {
+  background: var(--bg);
+  color: var(--ink);
+  width: 100%;
+  height: 100%;
+  position: relative;
   font-size: 15px;
-  flex: 1;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
 }
 
-.todo-carrot {
-  font-size: 12px;
-  color: var(--carrot);
-  font-weight: 600;
+/* ===== 隱藏 scrollbar ===== */
+.lori-scroll::-webkit-scrollbar { display: none; }
+.lori-scroll { scrollbar-width: none; }
+
+/* ===== 通用卡片 ===== */
+.lori-card {
+  background: #fff;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
 }
 
-/* Timer */
-.timer-display {
-  font-size: 64px;
-  font-weight: 200;
-  text-align: center;
-  color: var(--dark);
-  padding: 40px 0;
+/* ===== 按鈕 ===== */
+.lori-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 20px;
+  border-radius: 12px;
+  border: 1px solid var(--hairline);
+  background: #fff;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  font-family: inherit;
+  transition: opacity 0.15s ease;
+}
+
+.lori-btn:active {
+  opacity: 0.7;
+}
+
+.lori-btn-primary {
+  background: var(--mint);
+  border-color: transparent;
+  color: #2a4a3a;
+}
+
+.lori-btn-violet {
+  background: var(--violet);
+  border-color: transparent;
+  color: #fff;
+}
+
+.lori-btn-ghost {
+  background: transparent;
+  border-color: var(--hairline);
+  color: var(--ink);
+}
+
+/* ===== 輸入欄 ===== */
+.lori-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+  font-family: inherit;
+}
+
+.lori-input:focus {
+  border-color: var(--violet);
+}
+
+.lori-input::placeholder {
+  color: var(--gray);
+}
+
+/* ===== tabular 數字 ===== */
+.tabnum {
   font-variant-numeric: tabular-nums;
 }
 
-.timer-step-name {
-  text-align: center;
-  font-size: 18px;
-  color: var(--text-light);
-  margin-bottom: 8px;
+/* ===== ASCII bunny 等寬 ===== */
+.ascii {
+  font-family: "SF Mono", ui-monospace, "Menlo", "Cascadia Mono", monospace;
+  white-space: pre;
+  letter-spacing: 0;
+  line-height: 1.15;
 }
 
-.timer-controls {
+/* ===== 線條圖示 stroke 預設 ===== */
+.icon {
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ===== 列表項 hover 微反應 ===== */
+.row {
+  transition: background 0.15s ease;
+}
+
+/* ================================================================
+   元件樣式
+   ================================================================ */
+
+/* ===== StatusBar 狀態列 ===== */
+.status-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
   display: flex;
-  justify-content: center;
-  gap: 16px;
-  padding: 20px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 30px 0;
+  height: 54px;
 }
 
-.btn {
-  padding: 12px 24px;
-  border-radius: 24px;
+.status-bar__time {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+  z-index: 1;
+}
+
+.status-bar__island {
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 112px;
+  height: 32px;
+  border-radius: 20px;
+  background: #000;
+}
+
+.status-bar--dark .status-bar__island {
+  background: #222;
+}
+
+.status-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 1;
+}
+
+/* ===== TabBar 底部導航 ===== */
+.tab-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 84px;
+  background: rgba(250,248,243,0.94);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--hairline);
+  padding-top: 10px;
+  padding-bottom: 30px;
+  z-index: 40;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+}
+
+.tab-bar__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--gray);
+  min-width: 60px;
   border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: color 0.2s ease;
+}
+
+.tab-bar__item--active {
+  color: var(--ink);
+}
+
+.tab-bar__label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.tab-bar__item--active .tab-bar__label {
+  font-weight: 600;
+}
+
+/* ===== HeaderBar 頁面標題列 ===== */
+.header-bar {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  margin-top: 54px;
+  position: relative;
+  z-index: 5;
+}
+
+.header-bar__left {
+  width: 60px;
+}
+
+.header-bar__back {
+  width: 48px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.header-bar__title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
+  flex: 1;
+}
+
+.header-bar__right {
+  width: 60px;
+  text-align: right;
+  padding-right: 8px;
+}
+
+.header-bar__action {
+  border: none;
+  background: transparent;
+  color: var(--violet);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  font-family: inherit;
 }
 
-.btn-primary {
-  background: var(--primary);
-  color: white;
+/* ===== DateBar 日期切換列 ===== */
+.date-bar {
+  margin: 0 16px;
+  margin-top: 4px;
+  position: relative;
+  height: 56px;
+  border-radius: 12px;
+  background: rgba(168,216,190,0.18);
+  overflow: hidden;
+  border: 1px solid rgba(168,216,190,0.4);
 }
 
-.btn-secondary {
-  background: var(--border);
-  color: var(--text);
+.date-bar__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(168,216,190,0.55);
+  transition: width 0.4s ease;
 }
 
-.btn-skip {
-  background: none;
-  color: var(--text-light);
-  text-decoration: underline;
+.date-bar__content {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  justify-content: space-between;
 }
 
-/* Encouragement Toast */
+.date-bar__btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.date-bar__center {
+  text-align: center;
+  flex: 1;
+}
+
+.date-bar__label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.date-bar__pct {
+  font-size: 11px;
+  color: var(--ink-65);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* ===== Cover 封面頁 ===== */
+.cover {
+  position: absolute;
+  inset: 0;
+  padding: 0 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.cover__bunny {
+  color: rgba(168,216,190,0.92);
+  font-size: 22px;
+  line-height: 1.2;
+  margin-top: -40px;
+}
+
+.cover__title {
+  margin-top: 48px;
+  font-size: 28px;
+  font-weight: 600;
+  color: #F0ECE2;
+  letter-spacing: 0.06em;
+}
+
+.cover__subtitle {
+  margin-top: 8px;
+  font-size: 13px;
+  color: rgba(240,236,226,0.55);
+  letter-spacing: 0.3em;
+}
+
+.cover__bottom {
+  position: absolute;
+  bottom: 80px;
+  left: 24px;
+  right: 24px;
+}
+
+.cover__start {
+  width: 100%;
+  height: 56px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+}
+
+.cover__version {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(240,236,226,0.45);
+}
+
+/* ===== Encouragement Toast ===== */
 .encouragement-toast {
   position: fixed;
   top: 40%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.8);
-  background: var(--dark);
+  background: var(--navy);
   color: white;
   padding: 20px 32px;
   border-radius: 16px;
@@ -233,9 +453,2584 @@ body {
   transition: all 0.3s ease;
   z-index: 200;
   max-width: 300px;
+  pointer-events: none;
 }
 
 .encouragement-toast.show {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
+}
+
+/* ===== Home Indicator ===== */
+.home-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 60;
+}
+
+.home-indicator__bar {
+  width: 132px;
+  height: 5px;
+  border-radius: 100px;
+  background: rgba(0,0,0,0.25);
+}
+
+.home-indicator--dark .home-indicator__bar {
+  background: rgba(255,255,255,0.7);
+}
+
+/* ===== RingProgress 圓環進度圈 ===== */
+.lori-ring-progress {
+  display: inline-block;
+}
+
+.lori-ring-progress__label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* ===== PillBar 膠囊進度條 ===== */
+.lori-pill-bar__label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.lori-pill-bar__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lori-pill-bar__pct {
+  font-size: 12px;
+  color: var(--ink-65);
+  font-weight: 500;
+}
+
+.lori-pill-bar__track {
+  overflow: hidden;
+}
+
+.lori-pill-bar__fill {
+  transition: width 0.4s ease;
+}
+
+/* ===== Heatmap 熱力圖 ===== */
+.lori-heatmap__cell {
+  transition: opacity 0.15s ease;
+}
+
+.lori-heatmap__cell:hover {
+  opacity: 0.8;
+}
+
+/* ===== MiniCalendar 月曆 ===== */
+.lori-mini-calendar {
+  margin: 0 16px;
+  padding: 16px;
+}
+
+.lori-mini-calendar__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.lori-mini-calendar__title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.lori-mini-calendar__nav {
+  display: flex;
+  gap: 4px;
+  color: var(--gray);
+}
+
+.lori-mini-calendar__nav-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  font-size: 20px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: color 0.15s ease;
+}
+
+.lori-mini-calendar__nav-btn:hover {
+  color: var(--ink);
+}
+
+.lori-mini-calendar__week-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  font-size: 11px;
+  color: var(--gray);
+  margin-bottom: 6px;
+}
+
+.lori-mini-calendar__week-label {
+  text-align: center;
+  font-weight: 500;
+}
+
+.lori-mini-calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.lori-mini-calendar__empty {
+  height: 32px;
+}
+
+.lori-mini-calendar__day {
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  position: relative;
+  transition: opacity 0.15s ease;
+}
+
+.lori-mini-calendar__day:hover {
+  opacity: 0.8;
+}
+
+.lori-mini-calendar__day--today {
+  border: 1.5px solid var(--violet);
+  font-weight: 700;
+}
+
+/* ================================================================
+   Screen 1100 — 儀表板
+   ================================================================ */
+
+.lori-dashboard__top-right {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 16px 0;
+  z-index: 5;
+}
+
+.lori-dashboard__icon-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.lori-dashboard__icon-btn:active {
+  background: var(--hairline);
+}
+
+.lori-dashboard__score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 8px;
+}
+
+.lori-dashboard__carrot-label {
+  font-size: 13px;
+  color: var(--gray);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.lori-dashboard__carrot-num {
+  font-size: 56px;
+  font-weight: 700;
+  color: var(--carrot);
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+
+.lori-dashboard__ring-wrap {
+  margin-top: 12px;
+  position: relative;
+}
+
+.lori-dashboard__heat-section {
+  margin-top: 28px;
+  padding: 0 16px;
+}
+
+.lori-dashboard__heat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.lori-dashboard__heat-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-65);
+}
+
+.lori-dashboard__streak {
+  font-size: 11px;
+  color: var(--gray);
+}
+
+.lori-dashboard__cal-section {
+  margin-top: 16px;
+}
+
+/* ================================================================
+   Screen 1110 — 進度明細
+   ================================================================ */
+
+.lori-progress-detail__date-section {
+  padding: 0 16px;
+}
+
+.lori-progress-detail__date {
+  font-size: 13px;
+  color: var(--gray);
+  font-weight: 500;
+}
+
+.lori-progress-detail__overall-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.lori-progress-detail__overall-pct {
+  font-size: 44px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.lori-progress-detail__overall-unit {
+  font-size: 22px;
+  color: var(--gray);
+  margin-left: 2px;
+}
+
+.lori-progress-detail__overall-label {
+  font-size: 13px;
+  color: var(--ink-65);
+  font-weight: 500;
+}
+
+.lori-progress-detail__overall-bar {
+  margin-top: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(168,216,190,0.22);
+  overflow: hidden;
+}
+
+.lori-progress-detail__overall-fill {
+  height: 100%;
+  background: var(--mint);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.lori-progress-detail__cat-title {
+  margin-top: 28px;
+  padding: 0 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.lori-progress-detail__bars {
+  margin-top: 10px;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lori-progress-detail__encourage {
+  margin-top: 22px;
+  padding: 20px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-65);
+  font-style: italic;
+  line-height: 1.7;
+}
+
+/* ===== 進度條（DateBar 同款全寬樣式） ===== */
+.lori-progress-bar {
+  position: relative;
+  height: 72px;
+  border-radius: 12px;
+  background: rgba(168,216,190,0.12);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  transition: background 0.15s ease;
+}
+
+.lori-progress-bar:active {
+  background: rgba(168,216,190,0.2);
+}
+
+.lori-progress-bar__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  opacity: 0.45;
+  transition: width 0.4s ease;
+}
+
+.lori-progress-bar__content {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  justify-content: space-between;
+}
+
+.lori-progress-bar__left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lori-progress-bar__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lori-progress-bar__count {
+  font-size: 12px;
+  color: var(--ink-65);
+  font-weight: 500;
+}
+
+.lori-progress-bar__pct {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.lori-progress-bar__pct-unit {
+  font-size: 13px;
+  color: var(--gray);
+  opacity: 0.7;
+}
+
+/* ================================================================
+   CheckCircle 圓形 checkbox
+   ================================================================ */
+
+.lori-check-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1.5px solid var(--gray);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.lori-check-circle--bounce {
+  animation: lori-bounce 0.3s ease;
+}
+
+@keyframes lori-bounce {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.25); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* ================================================================
+   TodoRow 單筆 TODO 項目列
+   ================================================================ */
+
+.lori-todo-row {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.lori-todo-row__delete {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 84px;
+  background: var(--wine);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.lori-todo-row__delete:active {
+  background: #5e2a39;
+}
+
+.lori-todo-row__card {
+  position: relative;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  z-index: 1;
+  will-change: transform;
+  touch-action: pan-y;
+}
+
+.lori-todo-row__card--done {
+  background: #F6F4EE;
+  opacity: 0.65;
+}
+
+.lori-todo-row__name {
+  flex: 1;
+  font-size: 15px;
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lori-todo-row__urgency {
+  display: flex;
+  gap: 1px;
+  color: var(--wine);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  flex-shrink: 0;
+}
+
+.lori-todo-row__carrot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--carrot);
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   AddBar 浮動新增按鈕
+   ================================================================ */
+
+.lori-add-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 84px;
+  padding: 10px 16px 14px;
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+  z-index: 30;
+}
+
+.lori-add-bar__btn {
+  width: 100%;
+  height: 52px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ================================================================
+   Screen 1200 — TODO 當日頁
+   ================================================================ */
+
+.lori-todo-today__title-section {
+  padding: 10px 16px 14px;
+}
+
+.lori-todo-today__page-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.lori-todo-today__list {
+  padding: 20px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lori-todo-today__empty {
+  text-align: center;
+  color: var(--gray);
+  font-size: 15px;
+  padding: 40px 0;
+}
+
+/* ===== TODO 編輯/新增彈窗 ===== */
+
+.lori-todo-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.lori-todo-sheet {
+  width: 100%;
+  max-width: 430px;
+  padding: 24px 20px 32px;
+  border-radius: 20px 20px 0 0;
+  background: #fff;
+  animation: lori-sheet-up 0.25s ease;
+}
+
+@keyframes lori-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.lori-todo-sheet__title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.lori-todo-sheet__label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-65);
+  margin-top: 14px;
+  margin-bottom: 6px;
+}
+
+.lori-todo-sheet__select {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.lori-todo-sheet__btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.lori-todo-sheet__btns .lori-btn {
+  flex: 1;
+}
+
+/* ================================================================
+   DateStackRow — 日期堆疊列表行
+   ================================================================ */
+
+.lori-date-stack-row {
+  position: relative;
+  border-radius: 12px;
+  padding: 18px;
+  overflow: hidden;
+  color: var(--ink);
+  transition: opacity 0.15s ease;
+}
+
+.lori-date-stack-row:active {
+  opacity: 0.85;
+}
+
+.lori-date-stack-row__fill {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lori-date-stack-row__content {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lori-date-stack-row__left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lori-date-stack-row__label {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.lori-date-stack-row__sub {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.lori-date-stack-row__right {
+  text-align: right;
+}
+
+.lori-date-stack-row__pct {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.lori-date-stack-row__pct-unit {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* ================================================================
+   Screen 1210 — TODO 歷史頁
+   ================================================================ */
+
+.lori-todo-history__list {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lori-todo-history__empty {
+  text-align: center;
+  color: var(--gray);
+  font-size: 15px;
+  padding: 60px 0;
+}
+
+/* ================================================================
+   BlockCard — Routine Block 卡片
+   ================================================================ */
+
+.lori-block-card {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+}
+
+.lori-block-card--active {
+  border-color: var(--violet);
+  box-shadow: 0 4px 12px rgba(155,125,184,0.18);
+}
+
+.lori-block-card__stripe {
+  width: 6px;
+  flex-shrink: 0;
+}
+
+.lori-block-card__body {
+  flex: 1;
+  padding: 14px 16px;
+}
+
+.lori-block-card__title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.lori-block-card__name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.lori-block-card__pct {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-65);
+}
+
+.lori-block-card__info {
+  display: flex;
+  gap: 14px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--gray);
+  font-weight: 500;
+}
+
+.lori-block-card__pill {
+  margin-top: 10px;
+}
+
+/* ================================================================
+   StepRow — Step 列表單行
+   ================================================================ */
+
+.lori-step-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.lori-step-row--active {
+  border-color: var(--violet);
+}
+
+.lori-step-row--done {
+  opacity: 0.55;
+}
+
+.lori-step-row--done .lori-step-row__name {
+  text-decoration: line-through;
+  color: var(--gray);
+}
+
+.lori-step-row--skipped .lori-step-row__name {
+  text-decoration: line-through;
+  color: var(--gray);
+}
+
+.lori-step-row__idx {
+  width: 22px;
+  font-size: 13px;
+  color: var(--gray);
+  font-weight: 600;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.lori-step-row__name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lori-step-row__time {
+  font-size: 13px;
+  color: var(--ink-65);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.lori-step-row__divider {
+  width: 1px;
+  height: 22px;
+  background: var(--hairline);
+  flex-shrink: 0;
+}
+
+.lori-step-row__pre {
+  font-size: 11px;
+  color: var(--gray);
+  font-weight: 500;
+  min-width: 42px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.lori-step-row__status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+/* ================================================================
+   FormRow — 表單行
+   ================================================================ */
+
+.lori-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lori-form-row__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.lori-form-row__hint {
+  font-size: 11px;
+  color: var(--gray);
+}
+
+/* ================================================================
+   TimePicker — 時間選擇器
+   ================================================================ */
+
+.lori-time-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  position: relative;
+}
+
+.lori-time-picker__display {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.lori-time-picker__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  border: none;
+  font-size: 16px;
+}
+
+.lori-time-picker__chev {
+  display: flex;
+  align-items: center;
+}
+
+/* ================================================================
+   NumberStepper — 數字步進器
+   ================================================================ */
+
+.lori-number-stepper {
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.lori-number-stepper__btn {
+  width: 46px;
+  height: 46px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.lori-number-stepper__btn:active {
+  opacity: 0.6;
+}
+
+.lori-number-stepper__btn:disabled {
+  color: var(--gray);
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.lori-number-stepper__display {
+  flex: 1;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.lori-number-stepper__unit {
+  font-size: 13px;
+  color: var(--gray);
+  font-weight: 500;
+}
+
+/* ================================================================
+   Screen 1300 — Routine 主頁
+   ================================================================ */
+
+.lori-routine-home__hint {
+  margin-top: 22px;
+  padding: 0 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--gray);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.lori-routine-home__circle-wrap {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.lori-routine-home__circle {
+  width: 248px;
+  height: 248px;
+  border-radius: 50%;
+  border: 1.5px solid var(--hairline);
+  background: #fff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.lori-routine-home__block-label {
+  font-size: 11px;
+  color: var(--gray);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.lori-routine-home__block-name {
+  font-size: 16px;
+  color: var(--ink-65);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.lori-routine-home__time {
+  margin-top: 8px;
+  font-size: 56px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -1px;
+}
+
+.lori-routine-home__step-count {
+  font-size: 11px;
+  color: var(--gray);
+  font-weight: 500;
+  margin-top: -2px;
+}
+
+.lori-routine-home__play-btn {
+  margin-top: 16px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  background: var(--violet);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(155,125,184,0.4);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.lori-routine-home__play-btn:active {
+  opacity: 0.8;
+}
+
+.lori-routine-home__play-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.lori-routine-home__btn-row {
+  margin-top: 36px;
+  padding: 0 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.lori-routine-home__completed {
+  margin-top: 22px;
+  padding: 0 16px;
+}
+
+.lori-routine-home__completed-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.lori-routine-home__completed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ================================================================
+   Screen 1301 — Routine 計時進行
+   ================================================================ */
+
+.lori-routine-timer {
+  background: var(--bg);
+  width: 100%;
+  height: 100%;
+}
+
+.lori-routine-timer__bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: background 0.5s ease;
+}
+
+.lori-routine-timer__top {
+  position: absolute;
+  top: 64px;
+  left: 16px;
+  right: 16px;
+  z-index: 5;
+}
+
+.lori-routine-timer__top-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--gray);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.lori-routine-timer__progress {
+  margin-top: 8px;
+  display: flex;
+  gap: 3px;
+}
+
+.lori-routine-timer__progress-seg {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--hairline);
+  transition: background 0.3s ease;
+}
+
+.lori-routine-timer__main {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  z-index: 2;
+}
+
+.lori-routine-timer__phase-label {
+  font-size: 13px;
+  color: var(--gray);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.lori-routine-timer__step-name {
+  margin-top: 10px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.lori-routine-timer__countdown {
+  margin-top: 30px;
+  font-size: 128px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -4px;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.lori-routine-timer__last-five {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--carrot);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.lori-routine-timer__next-hint {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--gray);
+  font-weight: 500;
+  text-align: center;
+}
+
+.lori-routine-timer__controls {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 56px;
+  display: flex;
+  gap: 12px;
+  z-index: 5;
+}
+
+.lori-routine-timer__skip-btn {
+  flex: 1;
+  height: 60px;
+  font-size: 16px;
+  background: #EFEAE0;
+  color: var(--gray);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.lori-routine-timer__complete-btn {
+  flex: 1;
+  height: 60px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ================================================================
+   Screen 1302 — Routine 完成摘要
+   ================================================================ */
+
+.lori-routine-summary__block-label {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.lori-routine-summary__pct-wrap {
+  margin-top: 14px;
+  text-align: center;
+  line-height: 1;
+}
+
+.lori-routine-summary__pct-num {
+  font-size: 92px;
+  font-weight: 700;
+  color: var(--mint);
+  letter-spacing: -3px;
+}
+
+.lori-routine-summary__pct-unit {
+  font-size: 40px;
+  color: var(--ink-65);
+  margin-left: 4px;
+}
+
+.lori-routine-summary__stat-line {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--ink-65);
+}
+
+.lori-routine-summary__carrot-pill {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-left: auto;
+  margin-right: auto;
+  width: fit-content;
+  padding: 8px 18px;
+  background: rgba(244,132,95,0.10);
+  border-radius: 999px;
+  color: var(--carrot);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.lori-routine-summary__skip-section {
+  margin-top: 28px;
+  padding: 0 16px;
+}
+
+.lori-routine-summary__skip-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.lori-routine-summary__skip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lori-routine-summary__skip-card {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lori-routine-summary__redo-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--violet);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+}
+
+.lori-routine-summary__redo-btn:active {
+  opacity: 0.7;
+}
+
+.lori-routine-summary__encourage {
+  margin-top: 24px;
+  padding: 0 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-65);
+  font-style: italic;
+  line-height: 1.7;
+}
+
+.lori-routine-summary__bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px 30px;
+  background: linear-gradient(to top, var(--bg) 60%, transparent);
+  z-index: 10;
+}
+
+/* ================================================================
+   Screen 1310 — Block 列表
+   ================================================================ */
+
+.lori-block-list__cards {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lori-block-list__empty {
+  text-align: center;
+  color: var(--gray);
+  font-size: 15px;
+  padding: 60px 0;
+}
+
+/* ================================================================
+   Screen 131A — Block 編輯
+   ================================================================ */
+
+.lori-block-edit__form {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.lori-block-edit__play-card {
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lori-block-edit__play-info {
+  flex: 1;
+}
+
+.lori-block-edit__play-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lori-block-edit__play-sub {
+  font-size: 12px;
+  color: var(--gray);
+  margin-top: 2px;
+}
+
+.lori-block-edit__play-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--violet);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(155,125,184,0.35);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+}
+
+.lori-block-edit__play-btn:active {
+  opacity: 0.8;
+}
+
+.lori-block-edit__step-bar {
+  height: 64px;
+  border: none;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  cursor: pointer;
+  justify-content: space-between;
+  width: 100%;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.lori-block-edit__step-bar:active {
+  background: var(--hairline);
+}
+
+.lori-block-edit__step-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lori-block-edit__step-bar-text {
+  text-align: left;
+}
+
+.lori-block-edit__step-bar-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.lori-block-edit__step-bar-sub {
+  font-size: 12px;
+  color: var(--gray);
+  margin-top: 2px;
+}
+
+/* ================================================================
+   Screen 1311 — Step 列表
+   ================================================================ */
+
+.lori-step-list__col-headers {
+  padding: 0 30px 8px;
+  display: flex;
+  font-size: 11px;
+  color: var(--gray);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.lori-step-list__col-name {
+  flex: 1;
+}
+
+.lori-step-list__col-time {
+  width: 80px;
+  text-align: right;
+}
+
+.lori-step-list__col-pre {
+  width: 60px;
+  text-align: right;
+}
+
+.lori-step-list__rows {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lori-step-list__empty {
+  text-align: center;
+  color: var(--gray);
+  font-size: 15px;
+  padding: 60px 0;
+}
+
+/* ================================================================
+   Screen 131B — Step 編輯
+   ================================================================ */
+
+.lori-step-edit__form {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.lori-step-edit__note-input {
+  min-height: 64px;
+  resize: vertical;
+  padding: 12px 14px;
+  line-height: 1.45;
+}
+
+.lori-step-edit__preview {
+  padding: 0 16px;
+  margin-top: 8px;
+}
+
+.lori-step-edit__preview-box {
+  padding: 14px;
+  background: rgba(155,125,184,0.08);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--ink-65);
+  line-height: 1.6;
+}
+
+.lori-step-edit__preview-pre {
+  color: var(--violet);
+  font-weight: 600;
+}
+
+.lori-step-edit__preview-time {
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.lori-step-edit__preview-total {
+  font-weight: 600;
+}
+
+/* ===== NumberStepper num ===== */
+
+.lori-number-stepper__num {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+/* ================================================================
+   Screen 1320 — Routine 回顧
+   ================================================================ */
+
+.lori-routine-history__list {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lori-routine-history__empty {
+  text-align: center;
+  color: var(--gray);
+  font-size: 15px;
+  padding: 60px 0;
+}
+
+/* ================================================================
+   QuestPreviewCard — 今日認領 Quest 預覽
+   ================================================================ */
+
+.lori-quest-preview {
+  padding: 16px;
+}
+
+.lori-quest-preview__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lori-quest-preview__skill {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.lori-quest-preview__count {
+  font-size: 12px;
+  color: var(--ink-65);
+  font-weight: 600;
+}
+
+.lori-quest-preview__name {
+  margin-top: 6px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lori-quest-preview__pill {
+  margin-top: 12px;
+}
+
+.lori-quest-preview__bottom {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lori-quest-preview__pct {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.lori-quest-preview__complete-btn {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+/* ================================================================
+   QuestPick — 認領列表 checkbox 項目
+   ================================================================ */
+
+.lori-quest-pick {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lori-quest-pick__box {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.lori-quest-pick__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lori-quest-pick__skill {
+  font-size: 11px;
+  color: var(--gray);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.lori-quest-pick__name {
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lori-quest-pick__target {
+  font-size: 12px;
+  color: var(--ink-65);
+  font-weight: 600;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.lori-quest-pick__target-num {
+  font-size: 12px;
+  color: var(--ink-65);
+  font-weight: 600;
+}
+
+.lori-quest-pick__target-unit {
+  font-size: 10px;
+  color: var(--gray);
+}
+
+/* ================================================================
+   SkillCard — 技能卡片
+   ================================================================ */
+
+.lori-skill-card {
+  padding: 14px 16px;
+}
+
+.lori-skill-card__main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.lori-skill-card__left {
+  min-width: 0;
+}
+
+.lori-skill-card__name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lori-skill-card__cat {
+  margin-top: 6px;
+  display: inline-block;
+  padding: 3px 10px;
+  background: rgba(58,63,71,0.06);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-65);
+  letter-spacing: 0.2px;
+}
+
+.lori-skill-card__right {
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.lori-skill-card__pct {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.lori-skill-card__pct-unit {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.lori-skill-card__quest-count {
+  font-size: 11px;
+  color: var(--gray);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.lori-skill-card__pill {
+  margin-top: 12px;
+}
+
+/* ================================================================
+   Toggle — 雙選項開關切換
+   ================================================================ */
+
+.lori-toggle {
+  display: flex;
+  padding: 3px;
+  background: #EFEBE1;
+  border-radius: 12px;
+  height: 48px;
+  cursor: pointer;
+}
+
+.lori-toggle__option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray);
+  background: transparent;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+}
+
+.lori-toggle__option--active {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* ================================================================
+   Screen 1400 — 學習主頁
+   ================================================================ */
+
+.lori-learning-home__section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.lori-learning-home__claim-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lori-learning-home__empty {
+  text-align: center;
+  color: var(--gray);
+  font-size: 14px;
+  padding: 28px 0;
+}
+
+.lori-learning-home__claim-btn {
+  margin-top: 14px;
+  width: 100%;
+  height: 52px;
+  font-weight: 600;
+}
+
+.lori-learning-home__nav-row {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+}
+
+.lori-learning-home__heat-section {
+  margin-top: 24px;
+  padding: 0 16px;
+}
+
+.lori-learning-home__heat-card {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lori-learning-home__heat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lori-learning-home__heat-name {
+  flex: 1;
+  font-size: 13px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lori-learning-home__heat-dots {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.lori-learning-home__heat-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+/* ================================================================
+   Screen 1401 — 認領列表
+   ================================================================ */
+
+.lori-quest-claim__rec-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--violet);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.lori-quest-claim__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lori-quest-claim__divider {
+  margin: 22px 16px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--gray);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.lori-quest-claim__divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.lori-quest-claim__bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px 30px;
+  background: linear-gradient(to top, var(--bg) 60%, transparent);
+  z-index: 30;
+}
+
+.lori-quest-claim__confirm-btn {
+  width: 100%;
+  height: 52px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ================================================================
+   Screen 1410 — 技能列表
+   ================================================================ */
+
+.lori-skill-list__cards {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lori-skill-list__empty {
+  text-align: center;
+  color: var(--gray);
+  font-size: 15px;
+  padding: 60px 0;
+}
+
+/* ================================================================
+   Screen 141A — Skill 明細
+   ================================================================ */
+
+.lori-skill-detail__form {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.lori-skill-detail__progress-card {
+  padding: 14px 16px;
+  background: rgba(168,216,190,0.12);
+  border-color: rgba(168,216,190,0.5);
+}
+
+.lori-skill-detail__progress-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.lori-skill-detail__progress-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-65);
+}
+
+.lori-skill-detail__progress-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--hm-sun);
+}
+
+.lori-skill-detail__progress-track {
+  margin-top: 10px;
+  height: 8px;
+  border-radius: 8px;
+  background: #EFEBE1;
+  overflow: hidden;
+}
+
+.lori-skill-detail__progress-fill {
+  height: 100%;
+  background: var(--hm-sun);
+  border-radius: 8px;
+  transition: width 0.4s ease;
+}
+
+.lori-skill-detail__progress-info {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.lori-skill-detail__quest-section {
+  margin-top: 4px;
+}
+
+.lori-skill-detail__quest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.lori-skill-detail__quest-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.lori-skill-detail__quest-hint {
+  font-size: 11px;
+  color: var(--violet);
+  font-weight: 600;
+}
+
+.lori-skill-detail__quest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lori-skill-detail__quest-empty {
+  text-align: center;
+  color: var(--gray);
+  font-size: 14px;
+  padding: 30px 0;
+}
+
+.lori-skill-detail__quest-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  gap: 12px;
+}
+
+.lori-skill-detail__quest-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: transparent;
+  border: 1.5px solid var(--gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.lori-skill-detail__quest-checkbox--checked {
+  background: var(--violet);
+  border: none;
+}
+
+.lori-skill-detail__quest-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lori-skill-detail__quest-target {
+  font-size: 12px;
+  color: var(--gray);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   Screen 141B — Quest 編輯
+   ================================================================ */
+
+.lori-quest-edit__form {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ================================================================
+   Screen 1420 — 學習回顧
+   ================================================================ */
+
+.lori-learning-history__list {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lori-learning-history__empty {
+  text-align: center;
+  color: var(--gray);
+  font-size: 15px;
+  padding: 60px 0;
+}
+
+/* ================================================================
+   SettingRow — 設定項目行
+   ================================================================ */
+
+.lori-setting-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.lori-setting-row--last {
+  border-bottom: none;
+}
+
+.lori-setting-row__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(168,216,190,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.lori-setting-row__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.lori-setting-row__name {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.lori-setting-row__sub {
+  font-size: 12px;
+  color: var(--gray);
+  margin-top: 2px;
+}
+
+.lori-setting-row__chev {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* ================================================================
+   ToggleSwitch — 純開/關開關
+   ================================================================ */
+
+.lori-toggle-switch {
+  width: 50px;
+  height: 30px;
+  border-radius: 999px;
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, justify-content 0.2s ease;
+}
+
+.lori-toggle-switch--on {
+  background: var(--mint);
+  justify-content: flex-end;
+}
+
+.lori-toggle-switch--off {
+  background: #D9D5CC;
+  justify-content: flex-start;
+}
+
+.lori-toggle-switch__thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+
+/* ================================================================
+   Slider — 音量/數值滑桿
+   ================================================================ */
+
+.lori-slider {
+  width: 100%;
+}
+
+.lori-slider__label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.lori-slider__name {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.lori-slider__value {
+  color: var(--gray);
+  font-size: 12px;
+}
+
+.lori-slider__track {
+  height: 4px;
+  border-radius: 2px;
+  background: #EFEBE1;
+  position: relative;
+  cursor: pointer;
+  touch-action: none;
+  /* 增加可觸碰範圍 */
+  padding: 8px 0;
+  margin: -8px 0;
+  background-clip: content-box;
+}
+
+.lori-slider__fill {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--violet);
+  position: absolute;
+  top: 8px;
+  left: 0;
+  pointer-events: none;
+}
+
+.lori-slider__thumb {
+  position: absolute;
+  top: 3px;
+  margin-left: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  pointer-events: none;
+}
+
+/* ================================================================
+   Screen 1500 — 設定頁
+   ================================================================ */
+
+.lori-settings__section {
+  padding: 0 16px;
+  margin-bottom: 18px;
+}
+
+.lori-settings__group-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 0 6px 8px;
+}
+
+.lori-settings__slider-card {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lori-settings__footer {
+  padding: 8px 16px 0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--gray);
+  line-height: 1.7;
+}
+
+/* ================================================================
+   GachaTile — 抽獎格
+   ================================================================ */
+
+.lori-gacha-tile {
+  border: none;
+  padding: 16px;
+  border-radius: 14px;
+  text-align: left;
+  cursor: pointer;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 116px;
+  font-family: inherit;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.lori-gacha-tile:active {
+  transform: scale(0.97);
+}
+
+.lori-gacha-tile:disabled {
+  cursor: not-allowed;
+}
+
+.lori-gacha-tile__level {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.lori-gacha-tile__name {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.lori-gacha-tile__hint {
+  font-size: 11px;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+.lori-gacha-tile__price {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.2);
+  padding: 4px 10px;
+  border-radius: 999px;
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ================================================================
+   ShelfCard — 貨架商品卡
+   ================================================================ */
+
+.lori-shelf-card {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lori-shelf-card__level {
+  height: 76px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.lori-shelf-card__name {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  min-height: 36px;
+  color: var(--ink);
+}
+
+.lori-shelf-card__bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lori-shelf-card__price {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--carrot);
+}
+
+.lori-shelf-card__redeem {
+  font-size: 11px;
+  padding: 5px 10px;
+  border: 1px solid var(--violet);
+  background: transparent;
+  color: var(--violet);
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s ease;
+}
+
+.lori-shelf-card__redeem:active {
+  opacity: 0.7;
+}
+
+.lori-shelf-card__redeem:disabled {
+  cursor: not-allowed;
+  border-color: var(--gray);
+  color: var(--gray);
+}
+
+/* ================================================================
+   Screen 1600 — 商店頁
+   ================================================================ */
+
+.lori-shop__balance {
+  padding: 0 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lori-shop__balance-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.lori-shop__balance-num {
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--carrot);
+  line-height: 1.1;
+}
+
+.lori-shop__section {
+  padding: 0 16px;
+}
+
+.lori-shop__section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.lori-shop__gacha-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.lori-shop__shelf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.lori-shop__encourage {
+  margin-top: 22px;
+  padding: 0 24px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-65);
+  font-style: italic;
+  line-height: 1.7;
+}
+
+/* ===== 抽獎結果彈窗 ===== */
+
+.lori-shop-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.lori-shop-sheet {
+  width: 100%;
+  max-width: 430px;
+  padding: 28px 24px 36px;
+  border-radius: 20px 20px 0 0;
+  background: #fff;
+  animation: lori-sheet-up 0.25s ease;
+}
+
+.lori-shop-sheet__title {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.lori-shop-sheet__level {
+  font-size: 12px;
+  color: var(--gray);
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.lori-shop-sheet__result {
+  margin-top: 18px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.5;
+  padding: 16px;
+  background: rgba(168,216,190,0.12);
+  border-radius: 12px;
+}
+
+.lori-shop-sheet__cost {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--carrot);
+  font-weight: 600;
+}
+
+.lori-shop-sheet__btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ================================================================
+   Screen — 小蘿自訂 (Task 7-5)
+   ================================================================ */
+
+.lori-customize__section {
+  padding: 0 16px;
+  margin-bottom: 24px;
+}
+
+.lori-customize__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.lori-customize__hint {
+  font-size: 12px;
+  color: var(--ink-45);
+  margin-bottom: 12px;
+}
+
+/* 表情池格子 */
+.lori-customize__face-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.lori-customize__face-card {
+  padding: 14px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 90px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lori-customize__face-card--selected {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 2px rgba(155,125,184,0.25);
+}
+
+.lori-customize__face-ascii {
+  font-size: 14px;
+  color: var(--ink);
+  text-align: center;
+}
+
+.lori-customize__face-random {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--violet);
+  text-align: center;
+}
+
+/* 暱稱輸入 */
+.lori-customize__nick-input {
+  max-width: 100%;
+}
+
+/* 頻率按鈕群組 */
+.lori-customize__freq-group {
+  display: flex;
+  gap: 10px;
+}
+
+.lori-customize__freq-btn {
+  flex: 1;
+  height: 44px;
+  font-size: 14px;
+  padding: 0 10px;
 }

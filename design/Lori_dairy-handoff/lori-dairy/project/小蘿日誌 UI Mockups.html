@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>小蘿日誌 · UI Mock</title>
+<link rel="stylesheet" href="lori.css">
+<style>
+  html, body { margin:0; padding:0; height:100%; background:#f0eee9;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",system-ui,sans-serif; }
+  #root { height:100%; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="lori-components.jsx"></script>
+<script type="text/babel" src="screens-a.jsx"></script>
+<script type="text/babel" src="screens-b.jsx"></script>
+<script type="text/babel" src="screens-c.jsx"></script>
+<script type="text/babel" src="screens-d.jsx"></script>
+
+<script type="text/babel">
+  const { DesignCanvas, DCSection, DCArtboard } = window;
+
+  // iPhone 14 Plus
+  const W = 430, H = 932;
+
+  function Frame({ children }) {
+    return (
+      <div style={{ width: W, height: H, position: "relative",
+        background: "var(--bg)", overflow: "hidden",
+        fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", system-ui, sans-serif' }}>
+        {children}
+      </div>
+    );
+  }
+
+  const App = () => (
+    <DesignCanvas>
+      <DCSection id="cover" title="開機 · 儀表板" subtitle="進入小蘿日誌 · 今日全景 · 進度明細">
+        <DCArtboard id="1000" label="1000 · 封面" width={W} height={H}>
+          <Frame><Screen1000/></Frame>
+        </DCArtboard>
+        <DCArtboard id="1100" label="1100 · 儀表板" width={W} height={H}>
+          <Frame><Screen1100/></Frame>
+        </DCArtboard>
+        <DCArtboard id="1110" label="1110 · 進度明細" width={W} height={H}>
+          <Frame><Screen1110/></Frame>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="todo" title="一般 · 待辦" subtitle="當日 TODO 與歷史回顧">
+        <DCArtboard id="1200" label="1200 · TODO 當日" width={W} height={H}>
+          <Frame><Screen1200/></Frame>
+        </DCArtboard>
+        <DCArtboard id="1210" label="1210 · TODO 列表" width={W} height={H}>
+          <Frame><Screen1210/></Frame>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="routine" title="Routine · 計時器"
+        subtitle="主頁 → 計時 → 完成 / Block 編輯流程 / Step 編輯流程 / 回顧">
+        <DCArtboard id="1300" label="1300 · Routine 主頁" width={W} height={H}>
+          <Frame><Screen1300/></Frame>
+        </DCArtboard>
+        <DCArtboard id="1301" label="1301 · 計時進行" width={W} height={H}>
+          <Frame><Screen1301/></Frame>
+        </DCArtboard>
+        <DCArtboard id="1302" label="1302 · 完成摘要" width={W} height={H}>
+          <Frame><Screen1302/></Frame>
+        </DCArtboard>
+        <DCArtboard id="1310" label="1310 · Block 列表" width={W} height={H}>
+          <Frame><Screen1310/></Frame>
+        </DCArtboard>
+        <DCArtboard id="131A" label="131A · Block 編輯" width={W} height={H}>
+          <Frame><Screen131A/></Frame>
+        </DCArtboard>
+        <DCArtboard id="1311" label="1311 · Step 列表" width={W} height={H}>
+          <Frame><Screen1311/></Frame>
+        </DCArtboard>
+        <DCArtboard id="131B" label="131B · Step 編輯" width={W} height={H}>
+          <Frame><Screen131B/></Frame>
+        </DCArtboard>
+        <DCArtboard id="1320" label="1320 · Routine 回顧" width={W} height={H}>
+          <Frame><Screen1320/></Frame>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="learning" title="學習 · Skill / Quest"
+        subtitle="主頁 → 認領 / 技能 → Skill 明細 → Quest 編輯 → 回顧">
+        <DCArtboard id="1400" label="1400 · 學習主頁" width={W} height={H}>
+          <Frame><Screen1400/></Frame>
+        </DCArtboard>
+        <DCArtboard id="1401" label="1401 · 認領列表" width={W} height={H}>
+          <Frame><Screen1401/></Frame>
+        </DCArtboard>
+        <DCArtboard id="1410" label="1410 · 技能列表" width={W} height={H}>
+          <Frame><Screen1410/></Frame>
+        </DCArtboard>
+        <DCArtboard id="141A" label="141A · Skill 明細" width={W} height={H}>
+          <Frame><Screen141A/></Frame>
+        </DCArtboard>
+        <DCArtboard id="141B" label="141B · Quest 編輯" width={W} height={H}>
+          <Frame><Screen141B/></Frame>
+        </DCArtboard>
+        <DCArtboard id="1420" label="1420 · 學習回顧" width={W} height={H}>
+          <Frame><Screen1420/></Frame>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="meta" title="設定 · 商店"
+        subtitle="通知 / 提示音 / 備份 / 小蘿自訂 · 抽獎 + 貨架 微冒險">
+        <DCArtboard id="1500" label="1500 · 設定" width={W} height={H}>
+          <Frame><Screen1500/></Frame>
+        </DCArtboard>
+        <DCArtboard id="1600" label="1600 · 商店" width={W} height={H}>
+          <Frame><Screen1600/></Frame>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

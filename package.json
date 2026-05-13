@@ -1,0 +1,7 @@
+{
+  "name": "lori-diary",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "小蘿日誌 — Routine 養成 PWA"
+}

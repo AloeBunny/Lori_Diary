@@ -1,432 +1,213 @@
-// Pace — Routine 養成 App
-// 骨架版：tab 切換 + 資料結構 + IndexedDB 初始化
+// 小蘿日誌 — Entry Point
+// ES module，負責初始化 DB、註冊路由、啟動應用
 
-const DB_NAME = 'pace_db';
-const DB_VERSION = 1;
+import { getDB } from './db.js';
+import { route, initRouter, navigate, onNotFound, getRootEl } from './router.js';
+import { renderCover } from './screens/cover.js';
+import { renderPlaceholder } from './screens/placeholder.js';
+import { renderDashboard } from './screens/dashboard.js';
+import { renderProgressDetail } from './screens/progress-detail.js';
+import { renderTodoToday } from './screens/todo-today.js';
+import { renderTodoHistory } from './screens/todo-history.js';
+import { renderRoutineHome } from './screens/routine-home.js';
+import { renderRoutineTimer } from './screens/routine-timer.js';
+import { renderRoutineSummary } from './screens/routine-summary.js';
+import { renderBlockList } from './screens/block-list.js';
+import { renderBlockEdit } from './screens/block-edit.js';
+import { renderStepList } from './screens/step-list.js';
+import { renderStepEdit } from './screens/step-edit.js';
+import { renderRoutineHistory } from './screens/routine-history.js';
+import { renderSkillList } from './screens/skill-list.js';
+import { renderSkillDetail } from './screens/skill-detail.js';
+import { renderQuestEdit } from './screens/quest-edit.js';
+import { renderLearningHistory } from './screens/learning-history.js';
+import { renderLearningHome } from './screens/learning-home.js';
+import { renderQuestClaim } from './screens/quest-claim.js';
+import { renderSettings } from './screens/settings.js';
+import { renderShop } from './screens/shop.js';
+import { renderLoriCustomize } from './screens/lori-customize.js';
 
-// ===== IndexedDB =====
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      // TODO items
-      if (!db.objectStoreNames.contains('todos')) {
-        const store = db.createObjectStore('todos', { keyPath: 'id', autoIncrement: true });
-        store.createIndex('type', 'type');       // general | routine | learning
-        store.createIndex('date', 'date');
-      }
-      // Daily records (for heatmap)
-      if (!db.objectStoreNames.contains('records')) {
-        const store = db.createObjectStore('records', { keyPath: 'date' });
-      }
-      // Carrots
-      if (!db.objectStoreNames.contains('stats')) {
-        db.createObjectStore('stats', { keyPath: 'key' });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+// ===== 路由註冊 =====
+function registerRoutes() {
+  // 封面
+  route('#/cover', () => {
+    return renderCover(getRootEl());
   });
-}
 
-// ===== Tab Navigation =====
-const tabs = document.querySelectorAll('.tab');
-const content = document.getElementById('tab-content');
-
-tabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    tabs.forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    renderTab(tab.dataset.tab);
+  // 儀表板（Phase 2 實作）
+  route('#/dashboard', () => {
+    return renderDashboard(getRootEl());
   });
-});
 
-function renderTab(name) {
-  switch (name) {
-    case 'dashboard': renderDashboard(); break;
-    case 'general':   renderGeneral();   break;
-    case 'routine':   renderRoutine();   break;
-    case 'learning':  renderLearning();  break;
-  }
-}
-
-// ===== Dashboard =====
-function renderDashboard() {
-  content.innerHTML = `
-    <div class="dashboard-header">
-      <div class="carrot-count">🥕 0</div>
-      <div class="carrot-label">小蘿的紅蘿蔔</div>
-    </div>
-    <div class="progress-ring">
-      <svg viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r="52" fill="none" stroke="#E8E4DE" stroke-width="8"/>
-        <circle cx="60" cy="60" r="52" fill="none" stroke="#A8D8BE" stroke-width="8"
-          stroke-dasharray="327" stroke-dashoffset="327" stroke-linecap="round"
-          transform="rotate(-90 60 60)"/>
-        <text x="60" y="65" text-anchor="middle" font-size="24" fill="#2D2D2D">0%</text>
-      </svg>
-    </div>
-    <div class="heatmap-mini">
-      ${Array(28).fill('<div class="heatmap-cell"></div>').join('')}
-    </div>
-  `;
-}
-
-// ===== General TODO =====
-function renderGeneral() {
-  content.innerHTML = `
-    <h2 style="margin-bottom:16px">一般 TODO</h2>
-    <ul class="todo-list" id="general-list"></ul>
-    <button class="btn btn-primary" style="width:100%;margin-top:12px"
-      onclick="addTodo('general')">+ 新增</button>
-  `;
-}
-
-// ===== Routine Timer =====
-let _timer = { interval: null, remaining: 0, stepIndex: 0, steps: [], running: false };
-
-const DEFAULT_ROUTINES = {
-  morning: {
-    name: '晨間 Routine',
-    steps: [
-      { name: '起床', duration: 300 },
-      { name: '運動', duration: 1500 },
-      { name: '備餐', duration: 900 },
-      { name: '梳洗', duration: 1200 },
-      { name: '吃早餐', duration: 900 },
-      { name: '出門準備', duration: 600 }
-    ]
-  },
-  evening: {
-    name: '晚間 Routine',
-    steps: [
-      { name: '做飯', duration: 1800 },
-      { name: '健身', duration: 1200 },
-      { name: '吃飯', duration: 1200 },
-      { name: '家務', duration: 1800 },
-      { name: '學習', duration: 2700 },
-      { name: '放鬆', duration: 2700 },
-      { name: '洗澡', duration: 1200 },
-      { name: '就寢準備', duration: 600 }
-    ]
-  }
-};
-
-function formatTime(seconds) {
-  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
-  return `${m}:${s}`;
-}
-
-function renderRoutine() {
-  const step = _timer.steps[_timer.stepIndex];
-  const stepName = step ? step.name : '尚未開始';
-  const display = formatTime(_timer.remaining);
-
-  content.innerHTML = `
-    <h2 style="margin-bottom:16px">Routine</h2>
-    <div style="display:flex;gap:8px;margin-bottom:16px">
-      <button class="btn btn-secondary" onclick="loadRoutine('morning')" style="flex:1">晨間</button>
-      <button class="btn btn-secondary" onclick="loadRoutine('evening')" style="flex:1">晚間</button>
-    </div>
-    <div class="timer-step-name">${stepName}</div>
-    <div class="timer-display">${display}</div>
-    <div class="timer-controls">
-      <button class="btn btn-primary" onclick="toggleTimer()">${_timer.running ? '暫停' : '開始'}</button>
-      <button class="btn btn-secondary" onclick="completeStep()">完成 ✓</button>
-      <button class="btn btn-skip" onclick="skipStep()">跳過 →</button>
-    </div>
-    <div style="margin-top:8px;text-align:center">
-      <button class="btn btn-skip" onclick="endRoutine()" style="color:#e74c3c">結束本輪</button>
-    </div>
-    <ul class="todo-list" id="routine-steps" style="margin-top:20px">
-      ${_timer.steps.map((s, i) => `
-        <li class="todo-item" style="${i < _timer.stepIndex ? 'opacity:0.4' : i === _timer.stepIndex ? 'border-color:var(--primary)' : ''}">
-          <div class="todo-checkbox ${i < _timer.stepIndex ? 'checked' : ''}"></div>
-          <span class="todo-title">${s.name}</span>
-          <span class="todo-carrot">${formatTime(s.duration)}</span>
-        </li>
-      `).join('')}
-    </ul>
-  `;
-}
-
-function loadRoutine(key) {
-  stopTimer();
-  const routine = DEFAULT_ROUTINES[key];
-  _timer.steps = routine.steps.map(s => ({ ...s }));
-  _timer.stepIndex = 0;
-  _timer.remaining = _timer.steps[0].duration;
-  _timer.running = false;
-  renderRoutine();
-}
-
-function toggleTimer() {
-  if (!_timer.steps.length) return;
-  if (_timer.running) {
-    stopTimer();
-  } else {
-    _timer.running = true;
-    _timer.interval = setInterval(() => {
-      _timer.remaining--;
-      if (_timer.remaining <= 0) {
-        new Audio('data:audio/wav;base64,UklGRl9vT19teleQ==').play().catch(() => {});
-        stopTimer();
-      }
-      renderRoutine();
-    }, 1000);
-  }
-  renderRoutine();
-}
-
-function stopTimer() {
-  clearInterval(_timer.interval);
-  _timer.running = false;
-}
-
-async function completeStep() {
-  stopTimer();
-  await addCarrots(2);
-  const step = _timer.steps[_timer.stepIndex];
-  if (step) {
-    const msg = await getEncouragement('exercise');
-    showEncouragement(msg);
-  }
-  nextStep();
-}
-
-function skipStep() {
-  stopTimer();
-  nextStep();
-}
-
-function nextStep() {
-  _timer.stepIndex++;
-  if (_timer.stepIndex >= _timer.steps.length) {
-    endRoutine();
-    return;
-  }
-  _timer.remaining = _timer.steps[_timer.stepIndex].duration;
-  renderRoutine();
-}
-
-async function endRoutine() {
-  stopTimer();
-  _timer = { interval: null, remaining: 0, stepIndex: 0, steps: [], running: false };
-  showEncouragement('Routine 完成！');
-  renderRoutine();
-}
-
-// ===== Learning TODO =====
-function renderLearning() {
-  content.innerHTML = `
-    <h2 style="margin-bottom:16px">學習</h2>
-    <ul class="todo-list" id="learning-list"></ul>
-    <button class="btn btn-primary" style="width:100%;margin-top:12px"
-      onclick="addTodo('learning')">+ 新增</button>
-  `;
-}
-
-// ===== DB Helpers =====
-let _db = null;
-
-async function getDB() {
-  if (!_db) _db = await openDB();
-  return _db;
-}
-
-async function dbAdd(store, item) {
-  const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).add(item);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+  // 進度明細（Phase 2 實作）
+  route('#/progress/:date', (params) => {
+    return renderProgressDetail(getRootEl(), params);
   });
-}
 
-async function dbGetAll(store, indexName, value) {
-  const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(store, 'readonly');
-    const objStore = tx.objectStore(store);
-    let req;
-    if (indexName && value !== undefined) {
-      req = objStore.index(indexName).getAll(value);
-    } else {
-      req = objStore.getAll();
+  // TODO 歷史（Screen 1210）——靜態路由放動態前面
+  route('#/todo/history', () => {
+    return renderTodoHistory(getRootEl());
+  });
+
+  // TODO 當日（Screen 1200）
+  route('#/todo', () => {
+    return renderTodoToday(getRootEl());
+  });
+
+  // TODO 特定日期（Screen 1200 帶日期參數）
+  route('#/todo/:date', (params) => {
+    return renderTodoToday(getRootEl(), params);
+  });
+
+  // Routine 主頁（Screen 1300）
+  route('#/routine', () => {
+    return renderRoutineHome(getRootEl());
+  });
+
+  // Routine 回顧（Screen 1320）——靜態路由放動態前面
+  route('#/routine/history', () => {
+    return renderRoutineHistory(getRootEl());
+  });
+
+  // Block 列表（Screen 1310）——靜態路由放動態前面
+  route('#/routine/blocks', () => {
+    return renderBlockList(getRootEl());
+  });
+
+  // Step 編輯（Screen 131B）——多段路由放短路由前面
+  route('#/routine/blocks/:blockId/steps/:stepId', (params) => {
+    return renderStepEdit(getRootEl(), params);
+  });
+
+  // Step 列表（Screen 1311）
+  route('#/routine/blocks/:blockId/steps', (params) => {
+    return renderStepList(getRootEl(), params);
+  });
+
+  // Block 編輯（Screen 131A）
+  route('#/routine/blocks/:blockId', (params) => {
+    return renderBlockEdit(getRootEl(), params);
+  });
+
+  // Routine 重做（從 1302 摘要頁重做跳過的 step）
+  route('#/routine/redo/:blockIndex', (params) => {
+    // 從 sessionStorage 讀取重做資料
+    let redoData = null;
+    try {
+      const raw = sessionStorage.getItem('routine_redo');
+      if (raw) redoData = JSON.parse(raw);
+    } catch { /* ignore */ }
+
+    if (redoData) {
+      return renderRoutineTimer(getRootEl(), { blockIndex: params.blockIndex }, {
+        redoStep: redoData.step,
+        blockName: redoData.blockName,
+        onRedoComplete: (result) => {
+          // 更新原始結果
+          try {
+            const raw = sessionStorage.getItem('routine_result');
+            if (raw) {
+              const data = JSON.parse(raw);
+              if (result === 'completed') {
+                data.results[redoData.originalIdx] = 'completed';
+              }
+              sessionStorage.setItem('routine_result', JSON.stringify(data));
+            }
+          } catch { /* ignore */ }
+          sessionStorage.removeItem('routine_redo');
+          navigate(`#/routine/summary/${params.blockIndex}`);
+        },
+      });
     }
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    return renderPlaceholder(getRootEl(), '重做', { showBack: true, showTabBar: false });
+  });
+
+  // Routine 計時進行（Screen 1301）
+  route('#/routine/timer/:blockIndex', (params) => {
+    return renderRoutineTimer(getRootEl(), params);
+  });
+
+  // Routine 完成摘要（Screen 1302）
+  route('#/routine/summary/:blockIndex', (params) => {
+    return renderRoutineSummary(getRootEl(), params);
+  });
+
+  // Routine 特定日期
+  route('#/routine/:blockId', (params) => {
+    return renderPlaceholder(getRootEl(), `Routine · ${params.blockId}`, { showBack: true, showTabBar: false });
+  });
+
+  // 學習主頁（Screen 1400）
+  route('#/learning', () => {
+    return renderLearningHome(getRootEl());
+  });
+
+  // 學習回顧（Screen 1420）——靜態路由放動態前面
+  route('#/learning/history', () => {
+    return renderLearningHistory(getRootEl());
+  });
+
+  // 認領 Quest（Screen 1401）
+  route('#/learning/claim', () => {
+    return renderQuestClaim(getRootEl());
+  });
+
+  // 技能列表（Screen 1410）
+  route('#/learning/skills', () => {
+    return renderSkillList(getRootEl());
+  });
+
+  // Quest 編輯（Screen 141B）——多段路由放短路由前面
+  route('#/learning/skills/:skillId/quests/:questId', (params) => {
+    return renderQuestEdit(getRootEl(), params);
+  });
+
+  // Skill 明細（Screen 141A）
+  route('#/learning/skills/:skillId', (params) => {
+    return renderSkillDetail(getRootEl(), params);
+  });
+
+  // 學習特定日期（進度明細跳轉用，Phase 5 實作）
+  route('#/learning/:date', (params) => {
+    return renderPlaceholder(getRootEl(), `學習 · ${params.date}`, { showBack: true });
+  });
+
+  // 小蘿自訂（Screen 1500 子頁）——靜態路由放動態前面
+  route('#/settings/lori', () => {
+    return renderLoriCustomize(getRootEl());
+  });
+
+  // 設定（Screen 1500）
+  route('#/settings', () => {
+    return renderSettings(getRootEl());
+  });
+
+  // 商店（Screen 1600）
+  route('#/shop', () => {
+    return renderShop(getRootEl());
+  });
+
+  // 404
+  onNotFound(() => {
+    renderPlaceholder(getRootEl(), '404', { showTabBar: false });
   });
 }
 
-async function dbUpdate(store, item) {
-  const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).put(item);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function dbDelete(store, id) {
-  const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).delete(id);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
-}
-
-// ===== Carrots =====
-async function getCarrots() {
-  const db = await getDB();
-  return new Promise((resolve) => {
-    const tx = db.transaction('stats', 'readonly');
-    const req = tx.objectStore('stats').get('carrots');
-    req.onsuccess = () => resolve(req.result?.value || 0);
-    req.onerror = () => resolve(0);
-  });
-}
-
-async function addCarrots(amount) {
-  const current = await getCarrots();
-  await dbUpdate('stats', { key: 'carrots', value: current + amount });
-}
-
-// ===== Encouragements =====
-let _encouragements = null;
-
-async function getEncouragement(category) {
-  if (!_encouragements) {
-    const res = await fetch('encouragements.json');
-    _encouragements = await res.json();
-  }
-  const pool = _encouragements[category] || _encouragements.daily;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-function showEncouragement(text) {
-  const toast = document.createElement('div');
-  toast.className = 'encouragement-toast';
-  toast.textContent = text;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.classList.add('show'), 10);
-  setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
-}
-
-// ===== TODO CRUD =====
-async function addTodo(type) {
-  const title = prompt('名稱：');
-  if (!title) return;
-
-  const carrotMap = { general: 1, routine: 2, learning: 3 };
-  const todo = {
-    type,
-    title,
-    done: false,
-    date: new Date().toISOString().slice(0, 10),
-    carrots: carrotMap[type] || 1,
-    createdAt: Date.now()
-  };
-
-  await dbAdd('todos', todo);
-  renderTab(type);
-}
-
-async function toggleTodo(id, type) {
-  const items = await dbGetAll('todos');
-  const item = items.find(t => t.id === id);
-  if (!item) return;
-
-  item.done = !item.done;
-  await dbUpdate('todos', item);
-
-  if (item.done) {
-    await addCarrots(item.carrots);
-    const categoryMap = { general: 'daily', routine: 'exercise', learning: 'english' };
-    const msg = await getEncouragement(categoryMap[type] || 'daily');
-    showEncouragement(msg);
-  }
-
-  renderTab(type);
-}
-
-async function renderTodoList(type, listId) {
-  const items = await dbGetAll('todos', 'type', type);
-  const list = document.getElementById(listId);
-  if (!list) return;
-
-  list.innerHTML = items.map(item => `
-    <li class="todo-item">
-      <div class="todo-checkbox ${item.done ? 'checked' : ''}"
-        onclick="toggleTodo(${item.id}, '${type}')"></div>
-      <span class="todo-title" style="${item.done ? 'text-decoration:line-through;opacity:0.5' : ''}">${item.title}</span>
-      <span class="todo-carrot">🥕${item.carrots}</span>
-    </li>
-  `).join('');
-}
-
-// ===== Updated Renders =====
-async function renderDashboard() {
-  const carrots = await getCarrots();
-  const allTodos = await dbGetAll('todos');
-  const today = new Date().toISOString().slice(0, 10);
-  const todayItems = allTodos.filter(t => t.date === today);
-  const doneCount = todayItems.filter(t => t.done).length;
-  const totalCount = todayItems.length;
-  const pct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
-  const offset = 327 - (327 * pct / 100);
-
-  content.innerHTML = `
-    <div class="dashboard-header">
-      <div class="carrot-count">🥕 ${carrots}</div>
-      <div class="carrot-label">小蘿的紅蘿蔔</div>
-    </div>
-    <div class="progress-ring">
-      <svg viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r="52" fill="none" stroke="#E8E4DE" stroke-width="8"/>
-        <circle cx="60" cy="60" r="52" fill="none" stroke="#A8D8BE" stroke-width="8"
-          stroke-dasharray="327" stroke-dashoffset="${offset}" stroke-linecap="round"
-          transform="rotate(-90 60 60)"/>
-        <text x="60" y="65" text-anchor="middle" font-size="24" fill="#2D2D2D">${pct}%</text>
-      </svg>
-    </div>
-    <div class="heatmap-mini">
-      ${Array(28).fill('<div class="heatmap-cell"></div>').join('')}
-    </div>
-  `;
-}
-
-async function renderGeneral() {
-  content.innerHTML = `
-    <h2 style="margin-bottom:16px">一般 TODO</h2>
-    <ul class="todo-list" id="general-list"></ul>
-    <button class="btn btn-primary" style="width:100%;margin-top:12px"
-      onclick="addTodo('general')">+ 新增</button>
-  `;
-  await renderTodoList('general', 'general-list');
-}
-
-async function renderLearning() {
-  content.innerHTML = `
-    <h2 style="margin-bottom:16px">學習</h2>
-    <ul class="todo-list" id="learning-list"></ul>
-    <button class="btn btn-primary" style="width:100%;margin-top:12px"
-      onclick="addTodo('learning')">+ 新增</button>
-  `;
-  await renderTodoList('learning', 'learning-list');
-}
-
-// ===== Init =====
-(async () => {
+// ===== 啟動 =====
+async function init() {
+  // 初始化 IndexedDB
   await getDB();
-  renderDashboard();
-})();
+
+  // 建立渲染容器
+  const appEl = document.getElementById('app');
+
+  // 註冊路由
+  registerRoutes();
+
+  // 初始化 router
+  initRouter(appEl);
+}
+
+init().catch(err => {
+  console.error('小蘿日誌初始化失敗:', err);
+});

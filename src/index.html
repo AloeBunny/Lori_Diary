@@ -2,46 +2,57 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+
+  <!-- PWA / iOS Safari 支援 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="小蘿日誌">
   <meta name="theme-color" content="#A8D8BE">
-  <title>Pace</title>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="小蘿日誌">
+  <meta name="msapplication-TileColor" content="#A8D8BE">
+  <meta name="msapplication-navbutton-color" content="#A8D8BE">
+
+  <title>小蘿日誌</title>
+
+  <!-- Manifest -->
   <link rel="manifest" href="manifest.json">
+
+  <!-- Icons -->
   <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+  <!-- iOS Splash Screen（apple-touch-startup-image） -->
+  <!-- iPhone 14 Plus / 13 Pro Max (430x932) -->
+  <link rel="apple-touch-startup-image"
+        href="icons/icon-512.png"
+        media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)">
+  <!-- iPhone 14 / 13 / 13 Pro (390x844) -->
+  <link rel="apple-touch-startup-image"
+        href="icons/icon-512.png"
+        media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
+  <!-- iPhone SE 3rd (375x667) -->
+  <link rel="apple-touch-startup-image"
+        href="icons/icon-512.png"
+        media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+  <!-- iPhone 15 Pro Max / 14 Pro Max (430x932) -->
+  <link rel="apple-touch-startup-image"
+        href="icons/icon-512.png"
+        media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)">
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app">
-    <!-- Tab content renders here -->
-    <div id="tab-content"></div>
-
-    <!-- Bottom Tab Bar -->
-    <nav id="tab-bar">
-      <button class="tab active" data-tab="dashboard">
-        <span class="tab-icon">📊</span>
-        <span class="tab-label">儀表板</span>
-      </button>
-      <button class="tab" data-tab="general">
-        <span class="tab-icon">✅</span>
-        <span class="tab-label">一般</span>
-      </button>
-      <button class="tab" data-tab="routine">
-        <span class="tab-icon">⏱</span>
-        <span class="tab-label">Routine</span>
-      </button>
-      <button class="tab" data-tab="learning">
-        <span class="tab-icon">📖</span>
-        <span class="tab-label">學習</span>
-      </button>
-    </nav>
-  </div>
+  <div id="app"></div>
 
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js');
+      navigator.serviceWorker.register('sw.js').catch(function() {});
     }
   </script>
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

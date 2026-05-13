@@ -1,0 +1,126 @@
+/* 小蘿日誌 — design tokens & shared utility styles */
+
+:root {
+  /* 主色票 */
+  --mint:    #A8D8BE;   /* 主色 · 薄荷鼠尾草 */
+  --violet:  #9B7DB8;   /* 強調色 · 霧紫 */
+  --bg:      #FAF8F3;   /* 背景 · 象牙暖白 */
+  --card:    #F0ECE2;   /* 卡片 · 奶油亞麻 */
+  --ink:     #3A3F47;   /* 主文字 · 墨炭 */
+  --wine:    #7B3B4C;   /* 暗強調 · 酒紅 */
+  --gray:    #B0ADA6;   /* 次要文字 · 溫灰 */
+  --green:   #81C9A3;   /* 成功 · 柔綠 */
+  --carrot:  #F4845F;   /* 紅蘿蔔色 */
+  --navy:    #1B3A5C;   /* 海軍藍 */
+
+  --hairline: #E8E4DE;
+  --ink-65:  rgba(58,63,71,0.65);
+  --ink-45:  rgba(58,63,71,0.45);
+
+  /* 熱力圖飽和 100% */
+  --hm-mint:     #4DC49A;
+  --hm-lavender: #7E57C2;
+  --hm-coral:    #E57373;
+  --hm-sky:      #4FC3F7;
+  --hm-sun:      #FFD54F;
+  --hm-peach:    #FFB74D;
+  --hm-rose:     #F06292;
+  --hm-sage:     #81C784;
+  --hm-empty:    #F2F0ED;
+}
+
+/* 把 frame 內所有原生字體統一為系統字體 */
+.lori, .lori * {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+}
+
+.lori {
+  background: var(--bg);
+  color: var(--ink);
+  width: 100%;
+  height: 100%;
+  position: relative;
+  font-size: 15px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+}
+
+/* 隱藏 scrollbar (frame 內) */
+.lori-scroll::-webkit-scrollbar { display: none; }
+.lori-scroll { scrollbar-width: none; }
+
+/* 通用卡片 */
+.lori-card {
+  background: #fff;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+}
+
+/* 按鈕 */
+.lori-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 20px;
+  border-radius: 12px;
+  border: 1px solid var(--hairline);
+  background: #fff;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+.lori-btn-primary {
+  background: var(--mint);
+  border-color: transparent;
+  color: #2a4a3a;
+}
+.lori-btn-violet {
+  background: var(--violet);
+  border-color: transparent;
+  color: #fff;
+}
+.lori-btn-ghost {
+  background: transparent;
+  border-color: var(--hairline);
+  color: var(--ink);
+}
+
+/* tabular 數字（用於計時、積分） */
+.tabnum { font-variant-numeric: tabular-nums; }
+
+/* ASCII bunny — 等寬不變形 */
+.ascii {
+  font-family: "SF Mono", ui-monospace, "Menlo", "Cascadia Mono", monospace;
+  white-space: pre;
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+
+/* 線條圖示 stroke 預設 */
+.icon { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+/* 隱藏 placeholder 顏色 */
+.lori input::placeholder, .lori textarea::placeholder { color: var(--gray); }
+
+/* 輸入欄 */
+.lori-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+}
+.lori-input:focus { border-color: var(--violet); }
+
+/* 列表項 hover 微反應 (mockup 用) */
+.row { transition: background 0.15s ease; }
