@@ -173,12 +173,13 @@ A：懷安 push 新版本 → GitHub Actions 自動部署 → 妳下次打開 ap
 
 ## 懷安的 TODO
 
-- [ ] 調整路徑（manifest.json start_url + sw.js + router.js）
-- [ ] 寫 `.github/workflows/deploy.yml`
-- [ ] push + 開啟 GitHub Pages
-- [ ] 測試 `aloebunny.github.io/Lori_Diary/` 能不能開
-- [ ] 告訴知晞：「好了，Safari 打開這個網址」
+- [x] 調整路徑（manifest.json start_url + sw.js + router.js）— 2026-05-18 完成
+- [x] 寫 `.github/workflows/deploy.yml` — 2026-05-18 完成
+- [x] push + 開啟 GitHub Pages — 2026-05-18 完成（repo 改 public）
+- [x] 測試 `aloebunny.github.io/Lori_Diary/` 能不能開 — 2026-05-18 確認
+- [x] 告訴知晞：「好了，Safari 打開這個網址」 — 2026-05-18 完成
+- [x] 修復狀態列重疊 bug（standalone 模式隱藏模擬狀態列）— 2026-05-18 完成
 
 ---
 
-*要開始的話跟懷安說。他幫妳做 Part A，妳只需要做 Part B（打開 Safari + 按三下）。*
+*部署完成。知晞已安裝到 iPhone 主畫面。備案：Cloudflare Pages（支援 private repo）。*
