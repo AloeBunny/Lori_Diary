@@ -10,6 +10,14 @@ import { iconSignal, iconBattery } from './icons.js';
  * @returns {HTMLElement}
  */
 export function createStatusBar({ dark = false } = {}) {
+  // PWA standalone 模式下 iOS 已有原生狀態列，不重複渲染
+  const isStandalone = window.navigator.standalone === true
+    || window.matchMedia('(display-mode: standalone)').matches;
+  if (isStandalone) {
+    const placeholder = document.createElement('div');
+    return placeholder;
+  }
+
   const color = dark ? '#fff' : '#000';
 
   const bar = document.createElement('div');
