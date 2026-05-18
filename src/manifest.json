@@ -2,7 +2,7 @@
   "name": "小蘿日誌 — Routine 養成",
   "short_name": "小蘿日誌",
   "description": "小蘿陪你養成好習慣",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FAF8F3",

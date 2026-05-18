@@ -8,7 +8,7 @@ import { createHeaderBar } from '../components/header-bar.js';
 import { createDateStackRow } from '../components/date-stack-row.js';
 import { navigate } from '../router.js';
 import { dbGetAll } from '../db.js';
-import { todayStr } from '../utils/helpers.js';
+import { todayStr, silentCatch } from '../utils/helpers.js';
 
 // ===== 日期格式化 =====
 
@@ -66,14 +66,14 @@ async function collectLearningDates() {
 
   try {
     allClaims = await dbGetAll('claims');
-  } catch {
-    // claims store 可能還沒資料
+  } catch(e) {
+    silentCatch(e, 'learning history claims load');
   }
 
   try {
     allSkills = await dbGetAll('skills');
-  } catch {
-    // skills store 可能還沒資料
+  } catch(e) {
+    silentCatch(e, 'learning history skills load');
   }
 
   // 建立 skill name 查找表

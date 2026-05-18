@@ -6,53 +6,11 @@ import { createStatusBar } from '../components/status-bar.js';
 import { createTabBar } from '../components/tab-bar.js';
 import { createDateBar, updateDateBarProgress } from '../components/date-bar.js';
 import { navigate } from '../router.js';
-import { dbGetAll, dbPut, dbAdd, dbDelete, addCarrots } from '../db.js';
-import { todayStr, getEncouragement, showToast } from '../utils/helpers.js';
+import { dbGetAll, dbPut, dbAdd, dbDelete, addCarrots, reorderTodos, getMaxSortOrder } from '../db.js';
+import { bindDragSort } from '../utils/drag-sort.js';
+import { todayStr, getEncouragement, showToast, silentCatch, toLocalDateStr, prevDateStr, nextDateStr, parseDate } from '../utils/helpers.js';
 import { createTodoRow } from '../components/todo-row.js';
 import { createAddBar } from '../components/add-bar.js';
-
-// ===== 日期工具 =====
-
-/**
- * 將 Date 物件轉為 YYYY-MM-DD 本地日期字串
- * @param {Date} d
- * @returns {string}
- */
-function toLocalDateStr(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-/**
- * 取得前一天日期字串
- * @param {string} dateStr YYYY-MM-DD
- * @returns {string}
- */
-function prevDateStr(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  d.setDate(d.getDate() - 1);
-  return toLocalDateStr(d);
-}
-
-/**
- * 取得後一天日期字串
- * @param {string} dateStr YYYY-MM-DD
- * @returns {string}
- */
-function nextDateStr(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  d.setDate(d.getDate() + 1);
-  return toLocalDateStr(d);
-}
-
-/**
- * 將 YYYY-MM-DD 轉為 Date 物件
- */
-function parseDate(dateStr) {
-  return new Date(dateStr + 'T00:00:00');
-}
 
 // ===== 前日拖欠複製邏輯 =====
 
@@ -96,7 +54,9 @@ async function carryOverFromYesterday(dateStr) {
 
   if (undone.length > 0) {
     // 有未完事項 → 複製到今日，每拖欠一天加一個 !
+    let orderIndex = 0;
     for (const todo of undone) {
+      orderIndex++;
       const overdueDays = calcOverdueDays(todo, dateStr);
       const prefix = '!'.repeat(overdueDays);
       // 去掉原有的 ! 前綴，重新計算
@@ -112,6 +72,7 @@ async function carryOverFromYesterday(dateStr) {
         originDate: todo.originDate || todo.date,
         repeatCount: todo.repeatCount || 1,
         repeatCycle: todo.repeatCycle || '',
+        sort_order: orderIndex,
       });
     }
   } else {
@@ -130,6 +91,7 @@ async function carryOverFromYesterday(dateStr) {
         originDate: dateStr,
         repeatCount: 1,
         repeatCycle: '',
+        sort_order: 1,
       });
     }
   }
@@ -343,6 +305,10 @@ export function renderTodoToday(root, params = {}) {
 
   // cleanup
   return () => {
+    if (listContainer._dragSortCtrl) {
+      listContainer._dragSortCtrl.destroy();
+      listContainer._dragSortCtrl = null;
+    }
     if (statusBar._cleanup) statusBar._cleanup();
     root.className = '';
   };
@@ -369,11 +335,13 @@ async function _loadTodoData(dateStr, listContainer, dateBar, root) {
 async function _refreshList(dateStr, listContainer, dateBar) {
   const todos = await dbGetAll('todos', 'date', dateStr);
 
-  // 排序：未完成在前，已完成沉底
+  // 排序：未完成在前，已完成沉底；同群組內按 sort_order 排序
   const sorted = [...todos].sort((a, b) => {
     if (a.done && !b.done) return 1;
     if (!a.done && b.done) return -1;
-    return 0;
+    const oa = typeof a.sort_order === 'number' ? a.sort_order : Infinity;
+    const ob = typeof b.sort_order === 'number' ? b.sort_order : Infinity;
+    return oa - ob;
   });
 
   // 計算完成度
@@ -412,6 +380,21 @@ async function _refreshList(dateStr, listContainer, dateBar) {
     });
     listContainer.appendChild(rowEl);
   });
+
+  // 綁定拖曳排序（銷毀舊的再綁新的）
+  if (listContainer._dragSortCtrl) {
+    listContainer._dragSortCtrl.destroy();
+    listContainer._dragSortCtrl = null;
+  }
+  listContainer._dragSortCtrl = bindDragSort({
+    container: listContainer,
+    itemSelector: '.lori-todo-row',
+    onReorder: async (fromIndex, toIndex) => {
+      const items = Array.from(listContainer.querySelectorAll('.lori-todo-row'));
+      const orderedIds = items.map(el => Number(el.dataset.todoId));
+      await reorderTodos(orderedIds);
+    },
+  });
 }
 
 /**
@@ -429,9 +412,13 @@ async function _handleToggle(todo, dateStr, listContainer, dateBar) {
     try {
       const msg = await getEncouragement('todo');
       showToast(msg);
-    } catch {
+    } catch(e) {
+      silentCatch(e, 'todo toggle encouragement');
       showToast('做得好！');
     }
+  } else {
+    // 取消打勾 → 扣回紅蘿蔔積分
+    await addCarrots(-(todo.carrots || 1));
   }
 
   // 刷新列表
@@ -481,6 +468,7 @@ function _showAddForm(root, dateStr, refreshCallback) {
   const form = createTodoForm({
     todo: null,
     onSave: async (result) => {
+      const maxOrder = await getMaxSortOrder(dateStr);
       await dbAdd('todos', {
         name: result.name,
         done: false,
@@ -492,6 +480,7 @@ function _showAddForm(root, dateStr, refreshCallback) {
         originDate: dateStr,
         repeatCount: result.repeatCount,
         repeatCycle: result.repeatCycle,
+        sort_order: maxOrder + 1,
       });
       form.remove();
       refreshCallback();

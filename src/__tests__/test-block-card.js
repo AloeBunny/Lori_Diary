@@ -59,8 +59,9 @@ test('createBlockCard 預設參數不報錯', async () => {
     const { createBlockCard } = await import('../components/block-card.js');
     const el = createBlockCard();
     assert(el instanceof HTMLElement, '應回傳 HTMLElement');
-    assert(el.classList.contains('lori-block-card'), '應有 lori-block-card class');
-    assert(el.classList.contains('lori-card'), '應有 lori-card class');
+    assert(el.classList.contains('lori-block-card-wrap'), '應有 lori-block-card-wrap class');
+    assert(el.querySelector('.lori-block-card') !== null, '應有 lori-block-card 子元素');
+    assert(el.querySelector('.lori-card') !== null, '應有 lori-card 子元素');
   } catch (e) {
     if (e.message && e.message.includes('document is not defined')) {
       console.log('    (Node 環境無 DOM，跳過)');
@@ -159,7 +160,7 @@ test('createBlockCard active 狀態有 active class', async () => {
   try {
     const { createBlockCard } = await import('../components/block-card.js');
     const el = createBlockCard({ active: true });
-    assert(el.classList.contains('lori-block-card--active'), '應有 --active class');
+    assert(el.querySelector('.lori-block-card--active') !== null, '應有 --active class');
   } catch (e) {
     if (e.message && e.message.includes('document is not defined')) {
       console.log('    (Node 環境無 DOM，跳過)');

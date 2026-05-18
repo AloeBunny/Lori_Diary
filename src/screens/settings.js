@@ -30,7 +30,11 @@ export async function renderSettings(root) {
   const statusBar = createStatusBar();
   root.appendChild(statusBar);
 
-  const header = createHeaderBar({ title: '設定' });
+  const header = createHeaderBar({
+    title: '設定',
+    showBack: true,
+    onBack: () => navigate('#/dashboard'),
+  });
   root.appendChild(header);
 
   // 滾動容器
@@ -182,6 +186,9 @@ export async function renderSettings(root) {
 
   return () => {
     if (statusBar._cleanup) statusBar._cleanup();
+    [sliderMaster, sliderRoutine, sliderComplete, sliderEncourage].forEach(s => {
+      if (s.destroy) s.destroy();
+    });
     root.className = '';
   };
 }

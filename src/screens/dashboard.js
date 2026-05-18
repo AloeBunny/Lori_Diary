@@ -6,7 +6,7 @@ import { createTabBar } from '../components/tab-bar.js';
 import { iconGear, iconShop } from '../components/icons.js';
 import { navigate } from '../router.js';
 import { getCarrots, dbGetAll } from '../db.js';
-import { todayStr, calcStreak } from '../utils/helpers.js';
+import { todayStr, calcStreak, silentCatch } from '../utils/helpers.js';
 
 // ===== Worker A 元件 placeholder =====
 
@@ -20,7 +20,8 @@ let _createMiniCalendar = null;
 try {
   const mod = await import('../components/ring-progress.js');
   _createRingProgress = mod.createRingProgress;
-} catch {
+} catch(e) {
+  silentCatch(e, 'ring-progress import');
   _createRingProgress = ({ percent, label, size }) => {
     const el = document.createElement('div');
     el.className = 'lori-dashboard__ring-placeholder';
@@ -65,7 +66,8 @@ try {
 try {
   const mod = await import('../components/heatmap.js');
   _createHeatmap = mod.createHeatmap;
-} catch {
+} catch(e) {
+  silentCatch(e, 'heatmap import');
   _createHeatmap = ({ records, onSelect }) => {
     const el = document.createElement('div');
     el.className = 'lori-dashboard__heatmap-placeholder';
@@ -81,7 +83,8 @@ try {
 try {
   const mod = await import('../components/mini-calendar.js');
   _createMiniCalendar = mod.createMiniCalendar;
-} catch {
+} catch(e) {
+  silentCatch(e, 'mini-calendar import');
   _createMiniCalendar = ({ records, onSelect }) => {
     const el = document.createElement('div');
     el.className = 'lori-card lori-dashboard__calendar-placeholder';
@@ -111,7 +114,7 @@ async function getDayCompletion(dateStr) {
       const done = todos.filter(t => t.done).length;
       todoPct = done / todos.length;
     }
-  } catch { /* 無資料 */ }
+  } catch(e) { silentCatch(e, 'dashboard todo pct'); }
 
   // Routine 完成率
   let routinePct = 0;
@@ -121,7 +124,7 @@ async function getDayCompletion(dateStr) {
     if (dayRec && dayRec.routine_pct !== undefined) {
       routinePct = dayRec.routine_pct;
     }
-  } catch { /* 無資料 */ }
+  } catch(e) { silentCatch(e, 'dashboard routine pct'); }
 
   // 學習完成率
   let learningPct = 0;
@@ -132,7 +135,7 @@ async function getDayCompletion(dateStr) {
       const actual = claims.reduce((sum, c) => sum + Math.min(c.c_actual || 0, c.c_target || 1), 0);
       learningPct = total > 0 ? actual / total : 0;
     }
-  } catch { /* 無資料 */ }
+  } catch(e) { silentCatch(e, 'dashboard learning pct'); }
 
   const overall = (todoPct + routinePct + learningPct) / 3;
 
@@ -155,7 +158,8 @@ async function getRecentRecords(days = 112) {
       const comp = await getDayCompletion(dateStr);
       // percent 0~100（heatmap/calendar 期待 0~100），pct 0~1（calcStreak 期待 >0）
       records.push({ date: dateStr, percent: Math.round(comp.overall * 100), pct: comp.overall });
-    } catch {
+    } catch(e) {
+      silentCatch(e, 'dashboard day completion');
       records.push({ date: dateStr, percent: 0, pct: 0 });
     }
   }

@@ -1159,6 +1159,36 @@ body {
 }
 
 /* ================================================================
+   BlockCard — 左滑容器
+   ================================================================ */
+
+.lori-block-card-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.lori-block-card-wrap__delete {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 84px;
+  background: var(--wine);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.lori-block-card-wrap__delete:active {
+  background: #5e2a39;
+}
+
+/* ================================================================
    BlockCard — Routine Block 卡片
    ================================================================ */
 
@@ -1167,6 +1197,10 @@ body {
   overflow: hidden;
   display: flex;
   align-items: stretch;
+  position: relative;
+  z-index: 1;
+  will-change: transform;
+  touch-action: pan-y;
 }
 
 .lori-block-card--active {
@@ -1215,6 +1249,36 @@ body {
 }
 
 /* ================================================================
+   StepRow — 左滑容器
+   ================================================================ */
+
+.lori-step-row-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.lori-step-row-wrap__delete {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 84px;
+  background: var(--wine);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.lori-step-row-wrap__delete:active {
+  background: #5e2a39;
+}
+
+/* ================================================================
    StepRow — Step 列表單行
    ================================================================ */
 
@@ -1223,6 +1287,11 @@ body {
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
+  position: relative;
+  z-index: 1;
+  will-change: transform;
+  touch-action: pan-y;
+  background: #fff;
 }
 
 .lori-step-row--active {
@@ -1609,6 +1678,47 @@ body {
   color: var(--carrot);
   font-weight: 600;
   letter-spacing: 0.3px;
+}
+
+/* ===== 最後 5 秒閃爍動畫 ===== */
+@keyframes lori-timer-blink-slow {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+@keyframes lori-timer-blink-fast {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+@keyframes lori-timer-bg-pulse-slow {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+@keyframes lori-timer-bg-pulse-fast {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.15; }
+}
+
+/* 慢閃：5→3 秒（800ms 週期） */
+.lori-routine-timer__countdown--blink-slow {
+  animation: lori-timer-blink-slow 800ms ease-in-out infinite;
+}
+
+/* 快閃：2→1 秒（400ms 週期） */
+.lori-routine-timer__countdown--blink-fast {
+  animation: lori-timer-blink-fast 400ms ease-in-out infinite;
+}
+
+/* 背景慢脈動 */
+.lori-routine-timer__bg--pulse-slow {
+  animation: lori-timer-bg-pulse-slow 800ms ease-in-out infinite;
+}
+
+/* 背景快脈動 */
+.lori-routine-timer__bg--pulse-fast {
+  animation: lori-timer-bg-pulse-fast 400ms ease-in-out infinite;
 }
 
 .lori-routine-timer__next-hint {
@@ -2117,11 +2227,45 @@ body {
 }
 
 /* ================================================================
+   SkillCard — 左滑容器
+   ================================================================ */
+
+.lori-skill-card-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.lori-skill-card-wrap__delete {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 84px;
+  background: var(--wine);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.lori-skill-card-wrap__delete:active {
+  background: #5e2a39;
+}
+
+/* ================================================================
    SkillCard — 技能卡片
    ================================================================ */
 
 .lori-skill-card {
   padding: 14px 16px;
+  position: relative;
+  z-index: 1;
+  will-change: transform;
+  touch-action: pan-y;
 }
 
 .lori-skill-card__main {
@@ -2457,11 +2601,44 @@ body {
   padding: 30px 0;
 }
 
+/* Quest 列表 — 左滑容器 */
+
+.lori-quest-row-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.lori-quest-row-wrap__delete {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 84px;
+  background: var(--wine);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.lori-quest-row-wrap__delete:active {
+  background: #5e2a39;
+}
+
 .lori-skill-detail__quest-row {
   display: flex;
   align-items: center;
   padding: 12px 14px;
   gap: 12px;
+  position: relative;
+  z-index: 1;
+  will-change: transform;
+  touch-action: pan-y;
+  background: #fff;
 }
 
 .lori-skill-detail__quest-checkbox {
@@ -2958,6 +3135,134 @@ body {
   margin-top: 20px;
 }
 
+/* ===== 微冒險卡片 ===== */
+
+.lori-adventure-card {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lori-adventure-card[data-status="completed"] {
+  opacity: 0.7;
+}
+
+.lori-adventure-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lori-adventure-card__level {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  border: 1px solid;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.lori-adventure-card__badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #A8D8BE;
+  letter-spacing: 0.2px;
+}
+
+.lori-adventure-card__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.lori-adventure-card__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.lori-adventure-card__info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--carrot);
+}
+
+.lori-adventure-card__date {
+  font-weight: 500;
+  color: var(--gray);
+}
+
+.lori-adventure-card__complete-btn {
+  font-size: 11px;
+  padding: 5px 12px;
+  border: 1.5px solid #A8D8BE;
+  background: transparent;
+  color: #3A8C5E;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.lori-adventure-card__complete-btn:active {
+  background: #A8D8BE;
+  color: #fff;
+}
+
+.lori-adventure-card__refund {
+  font-size: 11px;
+  font-weight: 600;
+  color: #A8D8BE;
+}
+
+/* 微冒險列表區塊 */
+
+.lori-shop__adventures-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lori-shop__adventures-empty {
+  text-align: center;
+  padding: 20px 16px;
+  font-size: 13px;
+  color: var(--gray);
+  font-style: italic;
+}
+
+.lori-shop__adventures-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 12px;
+}
+
+.lori-shop__adventures-tab {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray);
+  cursor: pointer;
+  font-family: inherit;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.lori-shop__adventures-tab[data-active="true"] {
+  color: var(--violet);
+  border-bottom-color: var(--violet);
+}
+
 /* ================================================================
    Screen — 小蘿自訂 (Task 7-5)
    ================================================================ */
@@ -3033,4 +3338,24 @@ body {
   height: 44px;
   font-size: 14px;
   padding: 0 10px;
+}
+
+/* ================================================================
+   DragSort 拖曳排序
+   ================================================================ */
+
+.lori-drag-active {
+  opacity: 0.85;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  transform: scale(1.03);
+  border-radius: 12px;
+  pointer-events: none;
+  transition: box-shadow 0.2s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.lori-drag-placeholder {
+  background: rgba(168,216,190,0.18);
+  border: 2px dashed rgba(168,216,190,0.55);
+  border-radius: 12px;
+  transition: height 0.2s ease;
 }

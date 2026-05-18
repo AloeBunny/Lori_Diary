@@ -12,6 +12,7 @@ import { createPillBar, updatePillBar } from './pill-bar.js';
  * @param {number} opts.progressPercent - 完成百分比 0~100
  * @param {string} opts.color - 進度條顏色，預設 var(--hm-sun)
  * @param {function|null} opts.onComplete - 點完成按鈕回呼 () => void
+ * @param {function|null} opts.onClick - 點擊卡片本體回呼 () => void
  * @returns {HTMLElement}
  */
 export function createQuestPreviewCard({
@@ -20,6 +21,7 @@ export function createQuestPreviewCard({
   progressPercent = 0,
   color = 'var(--hm-sun)',
   onComplete = null,
+  onClick = null,
 } = {}) {
   const clamped = Math.max(0, Math.min(100, progressPercent));
 
@@ -86,6 +88,12 @@ export function createQuestPreviewCard({
 
   // 暴露 PillBar 供更新用
   card._pillBar = pillBar;
+
+  // ── 點擊卡片本體（導航到編輯頁） ──
+  if (onClick) {
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => onClick());
+  }
 
   return card;
 }

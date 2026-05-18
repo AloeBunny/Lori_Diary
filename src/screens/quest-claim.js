@@ -6,7 +6,7 @@ import { createStatusBar } from '../components/status-bar.js';
 import { createQuestPick } from '../components/quest-pick.js';
 import { navigate } from '../router.js';
 import { dbGetAll, dbAdd } from '../db.js';
-import { todayStr } from '../utils/helpers.js';
+import { todayStr, silentCatch } from '../utils/helpers.js';
 
 // ===== 推薦邏輯 =====
 
@@ -73,6 +73,7 @@ export function renderQuestClaim(root) {
 
   // 選取狀態
   const selected = new Set(); // 格式：`${sk_index}-${q_index}`
+  const targetMap = new Map(); // 格式：`${sk_index}-${q_index}` → 今日目標量
   let _todayClaims = [];
 
   // 狀態列
@@ -156,16 +157,24 @@ export function renderQuestClaim(root) {
     confirmBtn.textContent = `確認認領 · ${n} 個 Quest`;
   }
 
-  // 建立 QuestPick 行（使用 Worker A 的元件）
+  // 建立 QuestPick 行（使用 Worker A 的元件）+ 今日目標量輸入
   function makePickRow(skill, quest, isRec) {
     const key = `${quest.sk_index}-${quest.q_index}`;
     const alreadyClaimed = _todayClaims.some(
       c => c.sk_index === quest.sk_index && c.q_index === quest.q_index
     );
 
+    // 預設目標量 = q_total（至少 1）
+    const defaultTarget = quest.q_total || 1;
+    targetMap.set(key, defaultTarget);
+
     // 推薦項預設勾選
     const initialChecked = (isRec && !alreadyClaimed) || alreadyClaimed;
     if (isRec && !alreadyClaimed) selected.add(key);
+
+    // 外層容器（pick + 目標輸入）
+    const wrapper = document.createElement('div');
+    wrapper.className = 'lori-quest-claim__pick-wrapper';
 
     const row = createQuestPick({
       quest: {
@@ -182,17 +191,55 @@ export function renderQuestClaim(root) {
         } else {
           selected.delete(key);
         }
+        // 顯示/隱藏目標輸入列
+        targetRow.style.display = checked ? 'flex' : 'none';
         updateCount();
       },
     });
+    wrapper.appendChild(row);
+
+    // 今日目標量輸入列
+    const targetRow = document.createElement('div');
+    targetRow.className = 'lori-quest-claim__target-row';
+    targetRow.style.display = initialChecked && !alreadyClaimed ? 'flex' : 'none';
+    targetRow.style.alignItems = 'center';
+    targetRow.style.gap = '8px';
+    targetRow.style.padding = '4px 0 8px 36px';
+    targetRow.style.fontSize = '13px';
+    targetRow.style.color = 'var(--text-sub, #666)';
+
+    const targetLabel = document.createElement('span');
+    targetLabel.textContent = '今日目標';
+    targetRow.appendChild(targetLabel);
+
+    const targetInput = document.createElement('input');
+    targetInput.className = 'lori-input';
+    targetInput.type = 'number';
+    targetInput.min = '1';
+    targetInput.value = String(defaultTarget);
+    targetInput.style.width = '72px';
+    targetInput.style.textAlign = 'center';
+    targetInput.style.padding = '4px 8px';
+    targetInput.style.fontSize = '14px';
+    targetInput.addEventListener('input', () => {
+      const v = parseInt(targetInput.value, 10);
+      targetMap.set(key, isNaN(v) || v < 1 ? 1 : v);
+    });
+    targetRow.appendChild(targetInput);
+
+    const unitLabel = document.createElement('span');
+    unitLabel.textContent = quest.q_unit || '';
+    targetRow.appendChild(unitLabel);
+
+    wrapper.appendChild(targetRow);
 
     // 已認領的不可再次操作
     if (alreadyClaimed) {
-      row.style.opacity = '0.5';
-      row.style.pointerEvents = 'none';
+      wrapper.style.opacity = '0.5';
+      wrapper.style.pointerEvents = 'none';
     }
 
-    return row;
+    return wrapper;
   }
 
   // 確認認領
@@ -211,10 +258,9 @@ export function renderQuestClaim(root) {
         const sk_index = parseInt(skStr, 10);
         const q_index = parseInt(qStr, 10);
 
-        const quest = allQuests.find(
-          q => q.sk_index === sk_index && q.q_index === q_index
-        );
-        const target = quest ? (quest.q_total || 1) : 1;
+        // 使用者設定的今日目標量（如未設定則 fallback 到 q_total）
+        const userTarget = targetMap.get(key);
+        const target = userTarget != null ? userTarget : 1;
 
         await dbAdd('claims', {
           c_date: today,
@@ -236,7 +282,7 @@ export function renderQuestClaim(root) {
       const allClaims = await dbGetAll('claims');
       const today = todayStr();
       _todayClaims = allClaims.filter(c => c.c_date === today);
-    } catch { /* ignore */ }
+    } catch(e) { silentCatch(e, 'quest claim today claims load'); }
 
     await _loadClaimData(recList, allList, makePickRow, updateCount);
   }

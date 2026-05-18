@@ -6,7 +6,7 @@ import { createHeaderBar } from '../components/header-bar.js';
 import { createAddBar } from '../components/add-bar.js';
 import { createStepRow } from '../components/step-row.js';
 import { navigate } from '../router.js';
-import { dbGetAll, dbAdd, dbGet } from '../db.js';
+import { dbGetAll, dbAdd, dbGet, dbDelete } from '../db.js';
 import { formatTime } from '../utils/helpers.js';
 
 // ===== 渲染 =====
@@ -88,6 +88,8 @@ export function renderStepList(root, params = {}) {
 
   // cleanup
   return () => {
+    const rows = root.querySelectorAll('.lori-step-row-wrap');
+    rows.forEach(row => { if (row._swipeCtrl) row._swipeCtrl.destroy(); });
     if (statusBar._cleanup) statusBar._cleanup();
     root.className = '';
   };
@@ -125,6 +127,15 @@ async function _loadStepData(blockId, listContainer, header) {
       const row = createStepRow({
         step,
         onClick: () => navigate(`#/routine/blocks/${blockId}/steps/${step.s_index}`),
+        onDelete: async (sIndex) => {
+          if (!confirm(`確定刪除「${step.s_name}」？`)) return;
+          try {
+            await dbDelete('steps', [blockId, sIndex]);
+            _loadStepData(blockId, listContainer, header);
+          } catch (err) {
+            console.warn('Step 刪除失敗:', err);
+          }
+        },
       });
       listContainer.appendChild(row);
     });

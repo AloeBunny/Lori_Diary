@@ -1,10 +1,25 @@
 // 小蘿日誌 — 工具函式
 
 /**
+ * 靜默捕獲錯誤，以 debug 等級記錄
+ * @param {*} err - 捕獲到的錯誤
+ * @param {string} context - 描述發生位置的字串
+ */
+export function silentCatch(err, context = '') {
+  if (typeof console !== 'undefined' && console.debug) {
+    console.debug(`[silentCatch${context ? ': ' + context : ''}]`, err);
+  }
+}
+
+/**
  * 取得今日日期字串 YYYY-MM-DD
  */
 export function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = (now.getMonth() + 1).toString().padStart(2, '0');
+  const d = now.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 /**
@@ -77,7 +92,8 @@ export async function getEncouragement(category) {
     try {
       const res = await fetch('encouragements.json');
       _encouragements = await res.json();
-    } catch {
+    } catch(e) {
+      silentCatch(e, 'encouragement fetch');
       return '做得好！繼續加油！';
     }
   }
@@ -130,4 +146,49 @@ export function showToast(text) {
     toast.classList.remove('show');
     setTimeout(() => toast.remove(), 300);
   }, 3000);
+}
+
+// ===== 日期工具 =====
+
+/**
+ * 將 Date 物件轉為 YYYY-MM-DD 本地日期字串
+ * @param {Date} d
+ * @returns {string}
+ */
+export function toLocalDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * 取得前一天日期字串
+ * @param {string} dateStr YYYY-MM-DD
+ * @returns {string}
+ */
+export function prevDateStr(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() - 1);
+  return toLocalDateStr(d);
+}
+
+/**
+ * 取得後一天日期字串
+ * @param {string} dateStr YYYY-MM-DD
+ * @returns {string}
+ */
+export function nextDateStr(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + 1);
+  return toLocalDateStr(d);
+}
+
+/**
+ * 將 YYYY-MM-DD 轉為 Date 物件
+ * @param {string} dateStr YYYY-MM-DD
+ * @returns {Date}
+ */
+export function parseDate(dateStr) {
+  return new Date(dateStr + 'T00:00:00');
 }

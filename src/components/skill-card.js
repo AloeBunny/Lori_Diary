@@ -1,8 +1,10 @@
 // 小蘿日誌 — SkillCard 元件
-// 技能卡片：名稱 + 分類標籤 + 進度% + PillBar + quest 數
+// 技能卡片：名稱 + 分類標籤 + 進度% + PillBar + quest 數 + 左滑刪除
 // 用於 1410 技能列表
 
 import { createPillBar, updatePillBar } from './pill-bar.js';
+import { iconTrash } from './icons.js';
+import { bindSwipe } from '../utils/swipe.js';
 
 /**
  * 建立 SkillCard
@@ -12,6 +14,7 @@ import { createPillBar, updatePillBar } from './pill-bar.js';
  * @param {number} opts.questCount - 該 Skill 下的 Quest 數量
  * @param {string} opts.color - 進度條顏色，預設 var(--hm-mint)
  * @param {function|null} opts.onClick - 點擊回呼 (sk_index) => void
+ * @param {function|null} opts.onDelete - 刪除回呼 (sk_index) => void
  * @returns {HTMLElement}
  */
 export function createSkillCard({
@@ -19,11 +22,28 @@ export function createSkillCard({
   questCount = 0,
   color = 'var(--hm-mint)',
   onClick = null,
+  onDelete = null,
 } = {}) {
   const { sk_index, sk_name, sk_category, progress } = skill;
   const clamped = Math.max(0, Math.min(100, progress));
 
-  // ── 外層卡片 ──
+  // ── 外層容器（含刪除區域） ──
+  const wrapper = document.createElement('div');
+  wrapper.className = 'lori-skill-card-wrap';
+  wrapper.dataset.skillIndex = String(sk_index);
+
+  // ── 刪除按鈕（底層） ──
+  const deleteZone = document.createElement('div');
+  deleteZone.className = 'lori-skill-card-wrap__delete';
+  const trashIcon = iconTrash(20);
+  trashIcon.setAttribute('stroke', '#fff');
+  deleteZone.appendChild(trashIcon);
+  deleteZone.addEventListener('click', () => {
+    if (onDelete) onDelete(sk_index);
+  });
+  wrapper.appendChild(deleteZone);
+
+  // ── 卡片本體（滑動層） ──
   const card = document.createElement('div');
   card.className = 'lori-skill-card lori-card';
   card.dataset.skillIndex = String(sk_index);
@@ -88,7 +108,7 @@ export function createSkillCard({
   pillWrap.appendChild(pillBar);
   card.appendChild(pillWrap);
 
-  // 暴露 PillBar 供更新用
+  // 暴露 PillBar 供更新用（放在 wrapper 上，因為 wrapper 是回傳元素）
   card._pillBar = pillBar;
 
   // ── 點擊事件 ──
@@ -97,7 +117,31 @@ export function createSkillCard({
     card.addEventListener('click', () => onClick(sk_index));
   }
 
-  return card;
+  wrapper.appendChild(card);
+
+  // ── 左滑手勢 ──
+  const swipeCtrl = bindSwipe({
+    element: wrapper,
+    slider: card,
+    onSwipeLeft: () => {
+      // 滑動打開，使用者點刪除按鈕才真正刪除
+    },
+    threshold: 80,
+  });
+  wrapper._swipeCtrl = swipeCtrl;
+  wrapper._pillBar = pillBar;
+
+  return wrapper;
+}
+
+/**
+ * 銷毀 SkillCard（清除 swipe 事件）
+ * @param {HTMLElement} el - createSkillCard 回傳的元素
+ */
+export function destroySkillCard(el) {
+  if (el._swipeCtrl) {
+    el._swipeCtrl.destroy();
+  }
 }
 
 /**
@@ -111,7 +155,8 @@ export function updateSkillCard(cardEl, percent) {
   const pctNum = cardEl.querySelector('.lori-skill-card__pct-num');
   if (pctNum) pctNum.textContent = String(Math.round(clamped));
 
-  if (cardEl._pillBar) {
-    updatePillBar(cardEl._pillBar, clamped);
+  const pill = cardEl._pillBar;
+  if (pill) {
+    updatePillBar(pill, clamped);
   }
 }

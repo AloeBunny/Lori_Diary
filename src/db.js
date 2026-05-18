@@ -10,12 +10,14 @@ const DEFAULT_BLOCKS = [
     b_index: 1,
     b_name: '晨間 Routine',
     b_rise: '0500',
+    b_start: '0530',
     b_set: '0730',
   },
   {
     b_index: 2,
     b_name: '晚間 Routine',
     b_rise: '1800',
+    b_start: '1830',
     b_set: '2230',
   },
 ];
@@ -97,8 +99,8 @@ function openDB() {
         const blockStore = tx.objectStore('blocks');
         const stepStore = tx.objectStore('steps');
 
-        DEFAULT_BLOCKS.forEach(b => blockStore.add(b));
-        DEFAULT_STEPS.forEach(s => stepStore.add(s));
+        DEFAULT_BLOCKS.forEach(b => blockStore.put(b));
+        DEFAULT_STEPS.forEach(s => stepStore.put(s));
       }
     };
 
@@ -183,6 +185,55 @@ async function dbCount(storeName) {
   });
 }
 
+// ===== TODO 排序 =====
+
+/**
+ * 取得指定日期 todos 中最大的 sort_order（沒有則回傳 0）
+ * @param {string} dateStr YYYY-MM-DD
+ * @returns {Promise<number>}
+ */
+async function getMaxSortOrder(dateStr) {
+  const todos = await dbGetAll('todos', 'date', dateStr);
+  let max = 0;
+  for (const t of todos) {
+    if (typeof t.sort_order === 'number' && t.sort_order > max) {
+      max = t.sort_order;
+    }
+  }
+  return max;
+}
+
+/**
+ * 批次更新 sort_order，接收排序後的 ID 陣列
+ * @param {number[]} orderedIds - 排序後的 todo id 陣列（index = 新順序）
+ * @returns {Promise<void>}
+ */
+async function reorderTodos(orderedIds) {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('todos', 'readwrite');
+    const store = tx.objectStore('todos');
+    let pending = orderedIds.length;
+
+    if (pending === 0) { resolve(); return; }
+
+    orderedIds.forEach((id, index) => {
+      const getReq = store.get(id);
+      getReq.onsuccess = () => {
+        const todo = getReq.result;
+        if (!todo) { pending--; if (pending === 0) resolve(); return; }
+        todo.sort_order = index + 1;
+        const putReq = store.put(todo);
+        putReq.onsuccess = () => { pending--; if (pending === 0) resolve(); };
+        putReq.onerror = () => reject(putReq.error);
+      };
+      getReq.onerror = () => reject(getReq.error);
+    });
+
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 // ===== 紅蘿蔔積分 =====
 
 async function getCarrots() {
@@ -192,7 +243,8 @@ async function getCarrots() {
 
 async function addCarrots(amount) {
   const current = await getCarrots();
-  await dbPut('stats', { key: 'carrots', value: current + amount });
+  const next = Math.max(0, current + amount);
+  await dbPut('stats', { key: 'carrots', value: next });
 }
 
 // ===== 設定 =====
@@ -204,6 +256,29 @@ async function getSetting(key, defaultValue) {
 
 async function setSetting(key, value) {
   await dbPut('settings', { key, value });
+}
+
+// ===== 微冒險完成 =====
+
+/**
+ * 完成微冒險，返還 50% 花費（無條件進位，對使用者有利）
+ * @param {number} id - shop_history 的 key（autoIncrement id）
+ * @returns {Promise<{record: Object, refund: number}>} 更新後的記錄與返還金額
+ */
+async function completeAdventure(id) {
+  const record = await dbGet('shop_history', id);
+  if (!record) throw new Error(`找不到 shop_history id=${id}`);
+  if (record.status === 'completed') throw new Error('這筆微冒險已經完成過了');
+
+  const refund = Math.ceil(record.cost * 0.5);
+
+  record.status = 'completed';
+  record.completedDate = new Date().toISOString();
+  await dbPut('shop_history', record);
+
+  await addCarrots(refund);
+
+  return { record, refund };
 }
 
 export {
@@ -219,8 +294,11 @@ export {
   dbCount,
   getCarrots,
   addCarrots,
+  completeAdventure,
   getSetting,
   setSetting,
+  getMaxSortOrder,
+  reorderTodos,
   DEFAULT_BLOCKS,
   DEFAULT_STEPS,
 };

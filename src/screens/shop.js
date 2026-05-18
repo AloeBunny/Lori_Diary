@@ -4,10 +4,10 @@
 import { createStatusBar } from '../components/status-bar.js';
 import { createHeaderBar } from '../components/header-bar.js';
 import { iconDice, iconShop as iconShopIco, iconList } from '../components/icons.js';
-import { createGachaTile, updateGachaTileState, createShelfCard, updateShelfCardState } from '../components/shop-elements.js';
+import { createGachaTile, updateGachaTileState, createShelfCard, updateShelfCardState, createAdventureCard } from '../components/shop-elements.js';
 import { navigate } from '../router.js';
-import { getCarrots, addCarrots, dbAdd, dbGetAll } from '../db.js';
-import { showToast } from '../utils/helpers.js';
+import { getCarrots, addCarrots, dbAdd, dbGetAll, completeAdventure } from '../db.js';
+import { showToast, silentCatch } from '../utils/helpers.js';
 
 // ===== 抽獎等級設定 =====
 const GACHA_CONFIG = [
@@ -189,7 +189,7 @@ export function renderShop(root) {
 
   balanceSection.appendChild(balanceLeft);
 
-  // 已兌換按鈕（預留）
+  // 已兌換按鈕
   const historyBtn = document.createElement('button');
   historyBtn.className = 'lori-btn lori-btn-ghost';
   historyBtn.style.height = '42px';
@@ -197,14 +197,119 @@ export function renderShop(root) {
   historyBtn.style.fontSize = '13px';
   const listIcon = iconList(16);
   historyBtn.appendChild(listIcon);
-  const historyLabel = document.createTextNode(' 已兌換');
+  const historyLabel = document.createTextNode(' 我的冒險');
   historyBtn.appendChild(historyLabel);
   historyBtn.addEventListener('click', () => {
-    showToast('兌換紀錄開發中...');
+    toggleAdventurePanel();
   });
   balanceSection.appendChild(historyBtn);
 
   body.appendChild(balanceSection);
+
+  // ===== 微冒險面板（預設隱藏）=====
+  const adventurePanel = document.createElement('div');
+  adventurePanel.className = 'lori-shop__section';
+  adventurePanel.style.display = 'none';
+
+  // 分頁 tabs
+  const adventureTabs = document.createElement('div');
+  adventureTabs.className = 'lori-shop__adventures-tabs';
+
+  const tabActive = document.createElement('button');
+  tabActive.className = 'lori-shop__adventures-tab';
+  tabActive.dataset.active = 'true';
+  tabActive.dataset.tab = 'active';
+  tabActive.textContent = '進行中';
+  adventureTabs.appendChild(tabActive);
+
+  const tabCompleted = document.createElement('button');
+  tabCompleted.className = 'lori-shop__adventures-tab';
+  tabCompleted.dataset.active = 'false';
+  tabCompleted.dataset.tab = 'completed';
+  tabCompleted.textContent = '已完成';
+  adventureTabs.appendChild(tabCompleted);
+
+  adventurePanel.appendChild(adventureTabs);
+
+  const adventureList = document.createElement('div');
+  adventureList.className = 'lori-shop__adventures-list';
+  adventurePanel.appendChild(adventureList);
+
+  body.appendChild(adventurePanel);
+
+  let _adventurePanelOpen = false;
+  let _adventureTab = 'active'; // 'active' | 'completed'
+
+  function toggleAdventurePanel() {
+    _adventurePanelOpen = !_adventurePanelOpen;
+    adventurePanel.style.display = _adventurePanelOpen ? '' : 'none';
+    if (_adventurePanelOpen) {
+      renderAdventureList();
+    }
+  }
+
+  tabActive.addEventListener('click', () => {
+    _adventureTab = 'active';
+    tabActive.dataset.active = 'true';
+    tabCompleted.dataset.active = 'false';
+    renderAdventureList();
+  });
+
+  tabCompleted.addEventListener('click', () => {
+    _adventureTab = 'completed';
+    tabActive.dataset.active = 'false';
+    tabCompleted.dataset.active = 'true';
+    renderAdventureList();
+  });
+
+  async function renderAdventureList() {
+    adventureList.textContent = '';
+    const allHistory = await dbGetAll('shop_history');
+    const filtered = allHistory.filter(r => r.status === _adventureTab);
+
+    // 按日期倒排
+    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    if (filtered.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'lori-shop__adventures-empty';
+      empty.textContent = _adventureTab === 'active'
+        ? '還沒有進行中的冒險，去抽一個吧！'
+        : '還沒有完成的冒險，加油！';
+      adventureList.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach(record => {
+      const card = createAdventureCard({
+        id: record.id,
+        name: record.name,
+        level: record.level,
+        cost: record.cost,
+        status: record.status,
+        date: record.date,
+        completedDate: record.completedDate || '',
+        onComplete: handleComplete,
+      });
+      adventureList.appendChild(card);
+    });
+  }
+
+  async function handleComplete(id) {
+    if (!confirm('確定完成這個微冒險嗎？完成後可獲得 50% 紅蘿蔔返還！')) {
+      return;
+    }
+
+    try {
+      const { refund } = await completeAdventure(id);
+      _carrots = await getCarrots();
+      refreshBalanceUI();
+      showToast(`冒險完成！返還 🥕 ${refund}`);
+      renderAdventureList();
+    } catch (err) {
+      showToast(err.message || '操作失敗');
+    }
+  }
 
   // ===== 抽獎區 =====
   const gachaSection = document.createElement('div');
@@ -253,7 +358,8 @@ export function renderShop(root) {
     try {
       const res = await fetch('adventures.json');
       _adventureData = await res.json();
-    } catch {
+    } catch(e) {
+      silentCatch(e, 'shop adventures.json load');
       _adventureData = { lv1: { items: [], cost: [5, 10] }, lv2: { items: [], cost: [15, 30] }, lv3: { items: [], cost: [50, 80] }, lv4: { items: [], cost: [100, 200] } };
     }
 
@@ -343,9 +449,9 @@ export function renderShop(root) {
     const overlay = showDrawResult(adventure, cost, level,
       // 重抽
       async () => {
-        const rerollCost = _rerollCount >= (_adventureData.free_rerolls || 1)
-          ? (_adventureData.reroll_cost || 2)
-          : 0;
+        // 超過免費次數後，重抽費用遞增：第 1 次付費重抽 1🥕、第 2 次 2🥕…
+        const paidRerolls = _rerollCount - (_adventureData.free_rerolls || 1) + 1;
+        const rerollCost = paidRerolls > 0 ? paidRerolls : 0;
 
         if (rerollCost > 0 && _carrots < rerollCost) {
           showToast('紅蘿蔔不夠重抽！');
@@ -389,6 +495,8 @@ export function renderShop(root) {
       date: new Date().toISOString(),
     });
     showToast(`已獲得微冒險：${adventure}`);
+    // 面板打開時即時更新
+    if (_adventurePanelOpen) renderAdventureList();
   }
 
   // ===== 貨架兌換 =====
@@ -413,6 +521,8 @@ export function renderShop(root) {
       date: new Date().toISOString(),
     });
     showToast(`已兌換：${item.name}`);
+    // 面板打開時即時更新
+    if (_adventurePanelOpen) renderAdventureList();
   }
 
   loadData();

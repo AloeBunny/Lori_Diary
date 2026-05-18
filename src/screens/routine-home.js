@@ -8,7 +8,7 @@ import { createBlockCard } from '../components/block-card.js';
 import { iconPlay } from '../components/icons.js';
 import { navigate } from '../router.js';
 import { dbGetAll } from '../db.js';
-import { formatTime, todayStr } from '../utils/helpers.js';
+import { formatTime, todayStr, silentCatch, toLocalDateStr, prevDateStr, nextDateStr, parseDate } from '../utils/helpers.js';
 
 // ===== 輔助函式 =====
 
@@ -71,9 +71,16 @@ function calcBlockTotalSeconds(steps) {
 /**
  * 渲染 Routine 主頁
  * @param {HTMLElement} root
+ * @param {object} params - 路由參數
+ * @param {string} [params.date] - YYYY-MM-DD（未指定 = 今天）
  * @returns {function} cleanup
  */
-export function renderRoutineHome(root) {
+export function renderRoutineHome(root, params = {}) {
+  const dateStr = params.date || todayStr();
+  const today = todayStr();
+  const isToday = dateStr === today;
+  const currentDate = parseDate(dateStr);
+
   root.className = 'lori';
 
   // 狀態列
@@ -103,9 +110,11 @@ export function renderRoutineHome(root) {
 
   // DateBar
   const dateBar = createDateBar({
-    date: new Date(),
+    date: currentDate,
     progress: 0,
-    isToday: true,
+    isToday,
+    onPrev: () => navigate(`#/routine/day/${prevDateStr(dateStr)}`),
+    onNext: () => navigate(`#/routine/day/${nextDateStr(dateStr)}`),
     onList: () => navigate('#/routine/history'),
   });
   body.appendChild(dateBar);
@@ -184,7 +193,7 @@ export function renderRoutineHome(root) {
 
   const completedTitle = document.createElement('div');
   completedTitle.className = 'lori-routine-home__completed-title';
-  completedTitle.textContent = '今日已完成';
+  completedTitle.textContent = isToday ? '今日已完成' : '當日已完成';
   completedSection.appendChild(completedTitle);
 
   const completedList = document.createElement('div');
@@ -198,7 +207,7 @@ export function renderRoutineHome(root) {
   root.appendChild(tabBar);
 
   // 載入資料
-  _loadRoutineData(blockName, timeDisplay, stepCountLabel, playBtn, hintDiv, completedList, dateBar);
+  _loadRoutineData(blockName, timeDisplay, stepCountLabel, playBtn, hintDiv, completedList, dateBar, dateStr, isToday);
 
   return () => {
     if (statusBar._cleanup) statusBar._cleanup();
@@ -209,7 +218,7 @@ export function renderRoutineHome(root) {
 /**
  * 非同步載入 Routine 資料
  */
-async function _loadRoutineData(blockNameEl, timeDisplayEl, stepCountEl, playBtnEl, hintEl, completedListEl, dateBarEl) {
+async function _loadRoutineData(blockNameEl, timeDisplayEl, stepCountEl, playBtnEl, hintEl, completedListEl, dateBarEl, dateStr, isToday) {
   try {
     const blocks = await dbGetAll('blocks');
     const allSteps = await dbGetAll('steps');
@@ -250,19 +259,20 @@ async function _loadRoutineData(blockNameEl, timeDisplayEl, stepCountEl, playBtn
     }
 
     // 更新 AM/PM 提示
-    if (matched) {
+    if (!isToday) {
+      hintEl.textContent = `${dateStr} 回顧`;
+    } else if (matched) {
       hintEl.textContent = `${getTimePeriodHint()} · 自動載入「${matched.b_name}」`;
     } else {
       hintEl.textContent = `${getTimePeriodHint()} · 無匹配 Block`;
     }
 
-    // 載入今日已完成的 Block 紀錄
-    // 從 records store 查詢今日 routine 完成紀錄
+    // 載入當日已完成的 Block 紀錄
+    // 從 records store 查詢該日 routine 完成紀錄
     try {
-      const today = todayStr();
       const records = await dbGetAll('records');
       const todayRecords = records.filter(r =>
-        r.date === today && r.type === 'routine' && r.blockIndex !== undefined
+        r.date === dateStr && r.type === 'routine' && r.blockIndex !== undefined
       );
 
       if (todayRecords.length > 0) {
@@ -274,7 +284,7 @@ async function _loadRoutineData(blockNameEl, timeDisplayEl, stepCountEl, playBtn
             block,
             stepCount: bSteps.length,
             completionPercent: Math.round((rec.completionPct || 0) * 100),
-            onClick: null,
+            onClick: (bIndex) => navigate(`#/routine/blocks/${bIndex}`),
           });
           completedListEl.appendChild(card);
         }
@@ -287,22 +297,21 @@ async function _loadRoutineData(blockNameEl, timeDisplayEl, stepCountEl, playBtn
         emptyMsg.textContent = '今日尚未完成任何 Block';
         completedListEl.appendChild(emptyMsg);
       }
-    } catch {
-      // 無紀錄
+    } catch(e) {
+      silentCatch(e, 'routine home completed blocks');
     }
 
-    // 更新 DateBar 進度（今日 routine 完成度）
+    // 更新 DateBar 進度（當日 routine 完成度）
     try {
-      const today = todayStr();
-      const records = await dbGetAll('records');
-      const todayRec = records.find(r => r.date === today);
+      const records2 = await dbGetAll('records');
+      const todayRec = records2.find(r => r.date === dateStr);
       if (todayRec && todayRec.routine_pct !== undefined) {
         const fill = dateBarEl.querySelector('.date-bar__fill');
         if (fill) fill.style.width = `${Math.round(todayRec.routine_pct * 100)}%`;
         const pct = dateBarEl.querySelector('.date-bar__pct');
         if (pct) pct.textContent = `完成度 ${Math.round(todayRec.routine_pct * 100)}%`;
       }
-    } catch { /* 無紀錄 */ }
+    } catch(e) { silentCatch(e, 'routine home datebar progress'); }
 
   } catch (err) {
     console.warn('Routine 主頁資料載入失敗:', err);

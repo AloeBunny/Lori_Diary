@@ -6,7 +6,7 @@ import { createHeaderBar } from '../components/header-bar.js';
 import { iconPlay } from '../components/icons.js';
 import { navigate } from '../router.js';
 import { addCarrots, dbPut, dbGet, dbGetAll } from '../db.js';
-import { formatTime, todayStr, getEncouragement } from '../utils/helpers.js';
+import { formatTime, todayStr, getEncouragement, silentCatch } from '../utils/helpers.js';
 import { calcRoutineCarrots } from './routine-timer.js';
 
 // ===== 渲染 =====
@@ -77,7 +77,7 @@ async function _loadSummary(blockIndex, body, confirmBtn, root, statusBar) {
   try {
     const raw = sessionStorage.getItem('routine_result');
     if (raw) resultData = JSON.parse(raw);
-  } catch { /* 解析失敗 */ }
+  } catch(e) { silentCatch(e, 'routine result parse'); }
 
   if (!resultData || resultData.blockIndex !== blockIndex) {
     // 無資料，顯示錯誤
@@ -92,7 +92,7 @@ async function _loadSummary(blockIndex, body, confirmBtn, root, statusBar) {
     return;
   }
 
-  const { blockName, results, steps } = resultData;
+  const { blockName, results, steps, elapsedSeconds } = resultData;
   const totalCount = results.length;
   let completedCount = results.filter(r => r === 'completed').length;
   const skippedCount = results.filter(r => r === 'skipped').length;
@@ -133,6 +133,18 @@ async function _loadSummary(blockIndex, body, confirmBtn, root, statusBar) {
   statLine.className = 'lori-routine-summary__stat-line';
   statLine.textContent = `${completedCount} / ${totalCount} step`;
   body.appendChild(statLine);
+
+  // 用時顯示
+  if (elapsedSeconds && elapsedSeconds > 0) {
+    const elapsed = Math.round(elapsedSeconds);
+    const mins = Math.floor(elapsed / 60);
+    const secs = elapsed % 60;
+    const timeLine = document.createElement('div');
+    timeLine.className = 'lori-routine-summary__stat-line';
+    timeLine.style.marginTop = '4px';
+    timeLine.textContent = `用時 ${mins} 分 ${secs} 秒`;
+    body.appendChild(timeLine);
+  }
 
   // 紅蘿蔔獎勵膠囊
   const carrotPill = document.createElement('div');
@@ -212,7 +224,8 @@ async function _loadSummary(blockIndex, body, confirmBtn, root, statusBar) {
   try {
     const msg = await getEncouragement('routine');
     encourageDiv.textContent = `「${msg}」`;
-  } catch {
+  } catch(e) {
+    silentCatch(e, 'routine summary encouragement');
     encourageDiv.textContent = '「做到了。不是因為容易才做的。」';
   }
   body.appendChild(encourageDiv);
@@ -232,7 +245,7 @@ async function _loadSummary(blockIndex, body, confirmBtn, root, statusBar) {
       try {
         const records = await dbGetAll('records');
         dayRecord = records.find(r => r.date === today);
-      } catch { /* 無紀錄 */ }
+      } catch(e) { silentCatch(e, 'routine summary day record'); }
 
       if (dayRecord) {
         dayRecord.routine_pct = pct;

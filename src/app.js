@@ -64,6 +64,11 @@ function registerRoutes() {
     return renderRoutineHome(getRootEl());
   });
 
+  // Routine 特定日期（DateBar 切換用）——靜態路由放動態前面
+  route('#/routine/day/:date', (params) => {
+    return renderRoutineHome(getRootEl(), params);
+  });
+
   // Routine 回顧（Screen 1320）——靜態路由放動態前面
   route('#/routine/history', () => {
     return renderRoutineHistory(getRootEl());
@@ -96,7 +101,10 @@ function registerRoutes() {
     try {
       const raw = sessionStorage.getItem('routine_redo');
       if (raw) redoData = JSON.parse(raw);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn('[小蘿日誌] routine_redo 解析失敗:', err);
+      import('./utils/helpers.js').then(h => h.showToast('重做資料讀取失敗，請重新操作'));
+    }
 
     if (redoData) {
       return renderRoutineTimer(getRootEl(), { blockIndex: params.blockIndex }, {
@@ -113,7 +121,10 @@ function registerRoutes() {
               }
               sessionStorage.setItem('routine_result', JSON.stringify(data));
             }
-          } catch { /* ignore */ }
+          } catch (err) {
+            console.warn('[小蘿日誌] routine_result 更新失敗:', err);
+            import('./utils/helpers.js').then(h => h.showToast('結果更新失敗，資料可能未儲存'));
+          }
           sessionStorage.removeItem('routine_redo');
           navigate(`#/routine/summary/${params.blockIndex}`);
         },
@@ -140,6 +151,11 @@ function registerRoutes() {
   // 學習主頁（Screen 1400）
   route('#/learning', () => {
     return renderLearningHome(getRootEl());
+  });
+
+  // 學習特定日期（DateBar 切換用）——靜態路由放動態前面
+  route('#/learning/day/:date', (params) => {
+    return renderLearningHome(getRootEl(), params);
   });
 
   // 學習回顧（Screen 1420）——靜態路由放動態前面

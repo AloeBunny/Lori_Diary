@@ -56,6 +56,7 @@ export function renderBlockEdit(root, params = {}) {
   const _form = {
     b_name: '',
     b_rise: '',
+    b_start: '',
     b_set: '',
   };
 
@@ -110,6 +111,7 @@ export function renderBlockEdit(root, params = {}) {
       ..._blockData,
       b_name: nameVal,
       b_rise: _form.b_rise,
+      b_start: _form.b_start,
       b_set: _form.b_set,
     };
 
@@ -132,6 +134,7 @@ export function renderBlockEdit(root, params = {}) {
       _blockData = block;
       _form.b_name = block.b_name || '';
       _form.b_rise = block.b_rise || '';
+      _form.b_start = block.b_start || '';
       _form.b_set = block.b_set || '';
 
       // 取得 steps 資訊
@@ -167,6 +170,14 @@ export function renderBlockEdit(root, params = {}) {
     });
     container.appendChild(
       createFormRow({ label: 'block-rise（最早啟動）', children: risePicker, hint: '到時間自動開機提示' })
+    );
+
+    // 計時起算
+    const startPicker = _createHHMMTimePicker(_form.b_start, (val) => {
+      _form.b_start = val;
+    });
+    container.appendChild(
+      createFormRow({ label: '計時起算', children: startPicker, hint: '步驟時間規劃基準，可與 block-rise 不同' })
     );
 
     // block-set

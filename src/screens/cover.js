@@ -2,7 +2,7 @@
 // ASCII 兔子（隨機表情） + 暗色背景 + START 按鈕
 
 import { createStatusBar } from '../components/status-bar.js';
-import { randomLoriFace, LORI_FACES } from '../utils/helpers.js';
+import { randomLoriFace, LORI_FACES, silentCatch } from '../utils/helpers.js';
 import { navigate } from '../router.js';
 import { getSetting } from '../db.js';
 
@@ -35,7 +35,7 @@ export function renderCover(root) {
       ascii.textContent = LORI_FACES[faceIdx];
     }
     // -1 = 隨機，已在上方設好，不需覆寫
-  }).catch(() => { /* 靜默，保留隨機 */ });
+  }).catch((e) => { silentCatch(e, 'cover face setting load'); });
 
   // App 標題
   const title = document.createElement('div');

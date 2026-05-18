@@ -1,5 +1,5 @@
 // 小蘿日誌 — TodoRow 單筆 TODO 項目列元件
-// 結構：CheckCircle + 名稱 + 急迫標記 + 紅蘿蔔數 + 左滑刪除 + 長按編輯
+// 結構：CheckCircle + 名稱 + 急迫標記 + 紅蘿蔔數 + 左滑刪除 + 單點/長按編輯
 
 import { createCheckCircle } from './check-circle.js';
 import { iconTrash } from './icons.js';
@@ -105,9 +105,12 @@ export function createTodoRow({
 
   // ── 長按觸發編輯 ──
   let longPressTimer = null;
+  let longPressFired = false;
   card.addEventListener('pointerdown', (e) => {
+    longPressFired = false;
     longPressTimer = setTimeout(() => {
       longPressTimer = null;
+      longPressFired = true;
       if (onEdit) onEdit(id);
     }, 600);
   });
@@ -122,6 +125,13 @@ export function createTodoRow({
       clearTimeout(longPressTimer);
       longPressTimer = null;
     }
+  });
+
+  // ── 單點文字進入編輯 ──
+  nameEl.addEventListener('click', (e) => {
+    // 長按已觸發過就不再重複
+    if (longPressFired) return;
+    if (onEdit) onEdit(id);
   });
 
   return wrapper;

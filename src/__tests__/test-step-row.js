@@ -24,8 +24,9 @@ test('createStepRow 預設參數不報錯', async () => {
     const { createStepRow } = await import('../components/step-row.js');
     const el = createStepRow();
     assert(el instanceof HTMLElement, '應回傳 HTMLElement');
-    assert(el.classList.contains('lori-step-row'), '應有 lori-step-row class');
-    assert(el.classList.contains('lori-card'), '應有 lori-card class');
+    assert(el.classList.contains('lori-step-row-wrap'), '應有 lori-step-row-wrap class');
+    assert(el.querySelector('.lori-step-row') !== null, '應有 lori-step-row 子元素');
+    assert(el.querySelector('.lori-card') !== null, '應有 lori-card 子元素');
   } catch (e) {
     if (e.message && e.message.includes('document is not defined')) {
       console.log('    (Node 環境無 DOM，跳過)');
@@ -99,7 +100,7 @@ test('createStepRow active 狀態高亮', async () => {
       step: { s_index: 4, s_name: '貓牛式', s_time: 60, s_prebuffer: 10 },
       status: 'active',
     });
-    assert(el.classList.contains('lori-step-row--active'), '應有 --active class');
+    assert(el.querySelector('.lori-step-row--active') !== null, '應有 --active class');
   } catch (e) {
     if (e.message && e.message.includes('document is not defined')) {
       console.log('    (Node 環境無 DOM，跳過)');
@@ -116,7 +117,7 @@ test('createStepRow done 狀態有 done class 和打勾圖示', async () => {
       step: { s_index: 1, s_name: '已完成', s_time: 300, s_prebuffer: 10 },
       status: 'done',
     });
-    assert(el.classList.contains('lori-step-row--done'), '應有 --done class');
+    assert(el.querySelector('.lori-step-row--done') !== null, '應有 --done class');
     const statusEl = el.querySelector('.lori-step-row__status');
     assert(statusEl !== null, '應有狀態圖示區');
     const svg = statusEl.querySelector('svg');
@@ -137,7 +138,7 @@ test('createStepRow skipped 狀態有刪除線', async () => {
       step: { s_index: 2, s_name: '被跳過', s_time: 60, s_prebuffer: 5 },
       status: 'skipped',
     });
-    assert(el.classList.contains('lori-step-row--skipped'), '應有 --skipped class');
+    assert(el.querySelector('.lori-step-row--skipped') !== null, '應有 --skipped class');
     const statusEl = el.querySelector('.lori-step-row__status');
     assert(statusEl !== null, '應有狀態圖示區');
   } catch (e) {
@@ -156,9 +157,9 @@ test('createStepRow pending 狀態無額外 class', async () => {
       step: { s_index: 5, s_name: '待進行', s_time: 120, s_prebuffer: 10 },
       status: 'pending',
     });
-    assert(!el.classList.contains('lori-step-row--active'), '不應有 --active');
-    assert(!el.classList.contains('lori-step-row--done'), '不應有 --done');
-    assert(!el.classList.contains('lori-step-row--skipped'), '不應有 --skipped');
+    assert(el.querySelector('.lori-step-row--active') === null, '不應有 --active');
+    assert(el.querySelector('.lori-step-row--done') === null, '不應有 --done');
+    assert(el.querySelector('.lori-step-row--skipped') === null, '不應有 --skipped');
     const statusEl = el.querySelector('.lori-step-row__status');
     assertEqual(statusEl, null, 'pending 不應有狀態圖示');
   } catch (e) {

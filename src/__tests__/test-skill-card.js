@@ -25,8 +25,9 @@ test('預設參數不報錯', async () => {
     const { createSkillCard } = await import('../components/skill-card.js');
     const el = createSkillCard();
     assert(el instanceof HTMLElement, '應回傳 HTMLElement');
-    assert(el.classList.contains('lori-skill-card'), '應有 lori-skill-card class');
-    assert(el.classList.contains('lori-card'), '應有 lori-card class');
+    assert(el.classList.contains('lori-skill-card-wrap'), '應有 lori-skill-card-wrap class');
+    assert(el.querySelector('.lori-skill-card') !== null, '應有 lori-skill-card 子元素');
+    assert(el.querySelector('.lori-card') !== null, '應有 lori-card 子元素');
   } catch (e) {
     if (e.message && e.message.includes('document is not defined')) {
       console.log('    (Node 環境無 DOM，跳過)');
@@ -168,8 +169,9 @@ test('有 onClick 時設定 cursor', async () => {
       skill: { sk_index: 3, sk_name: 'X', sk_category: 'Y', progress: 0 },
       onClick: (idx) => { clicked = idx; },
     });
-    assertEqual(el.style.cursor, 'pointer', '有 onClick 時應有 pointer cursor');
-    el.click();
+    const card = el.querySelector('.lori-skill-card');
+    assertEqual(card.style.cursor, 'pointer', '有 onClick 時應有 pointer cursor');
+    card.click();
     assertEqual(clicked, 3, 'onClick 應收到 sk_index');
   } catch (e) {
     if (e.message && e.message.includes('document is not defined')) {

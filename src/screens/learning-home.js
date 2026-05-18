@@ -9,7 +9,7 @@ import { createPillBar } from '../components/pill-bar.js';
 import { iconPlus } from '../components/icons.js';
 import { navigate } from '../router.js';
 import { dbGetAll, dbPut, addCarrots } from '../db.js';
-import { todayStr, showToast, getEncouragement } from '../utils/helpers.js';
+import { todayStr, showToast, getEncouragement, toLocalDateStr, prevDateStr, nextDateStr, parseDate } from '../utils/helpers.js';
 
 // ===== 色彩分配 =====
 const SKILL_COLORS = [
@@ -105,9 +105,16 @@ function calcWeeklyHeat(skills, claims, weekDates) {
 /**
  * 渲染學習主頁
  * @param {HTMLElement} root
+ * @param {object} params - 路由參數
+ * @param {string} [params.date] - YYYY-MM-DD（未指定 = 今天）
  * @returns {function} cleanup
  */
-export function renderLearningHome(root) {
+export function renderLearningHome(root, params = {}) {
+  const dateStr = params.date || todayStr();
+  const today = todayStr();
+  const isToday = dateStr === today;
+  const currentDate = parseDate(dateStr);
+
   root.className = 'lori';
 
   // 狀態列
@@ -137,9 +144,11 @@ export function renderLearningHome(root) {
 
   // DateBar
   const dateBar = createDateBar({
-    date: new Date(),
+    date: currentDate,
     progress: 0,
-    isToday: true,
+    isToday,
+    onPrev: () => navigate(`#/learning/day/${prevDateStr(dateStr)}`),
+    onNext: () => navigate(`#/learning/day/${nextDateStr(dateStr)}`),
     onList: () => navigate('#/learning/history'),
   });
   body.appendChild(dateBar);
@@ -212,7 +221,7 @@ export function renderLearningHome(root) {
   root.appendChild(tabBar);
 
   // 載入資料
-  _loadLearningData(claimLabel, claimList, heatCard, dateBar);
+  _loadLearningData(claimLabel, claimList, heatCard, dateBar, dateStr);
 
   return () => {
     if (statusBar._cleanup) statusBar._cleanup();
@@ -223,15 +232,14 @@ export function renderLearningHome(root) {
 /**
  * 非同步載入學習資料
  */
-async function _loadLearningData(claimLabelEl, claimListEl, heatCardEl, dateBarEl) {
+async function _loadLearningData(claimLabelEl, claimListEl, heatCardEl, dateBarEl, dateStr) {
   try {
-    const today = todayStr();
     const skills = await dbGetAll('skills');
     const quests = await dbGetAll('quests');
     const allClaims = await dbGetAll('claims');
 
-    // 今日認領
-    const todayClaims = allClaims.filter(c => c.c_date === today);
+    // 當日認領
+    const todayClaims = allClaims.filter(c => c.c_date === dateStr);
 
     // 更新標題
     claimLabelEl.textContent = `今日認領（${todayClaims.length}）`;
@@ -267,8 +275,9 @@ async function _loadLearningData(claimLabelEl, claimListEl, heatCardEl, dateBarE
           progressPercent: pct,
           color,
           onComplete: isDone ? null : async () => {
-            await _completeQuest(claim, claimLabelEl, claimListEl, heatCardEl, dateBarEl);
+            await _completeQuest(claim, claimLabelEl, claimListEl, heatCardEl, dateBarEl, dateStr);
           },
+          onClick: () => navigate(`#/learning/skills/${skill.sk_index}`),
         });
 
         claimListEl.appendChild(card);
@@ -303,16 +312,15 @@ async function _loadLearningData(claimLabelEl, claimListEl, heatCardEl, dateBarE
 /**
  * 完成按鈕邏輯：把 c_actual 設為 c_target，加紅蘿蔔 + toast
  */
-async function _completeQuest(claim, claimLabelEl, claimListEl, heatCardEl, dateBarEl) {
+async function _completeQuest(claim, claimLabelEl, claimListEl, heatCardEl, dateBarEl, dateStr) {
   try {
     // 更新 claim
     claim.c_actual = claim.c_target;
     await dbPut('claims', claim);
 
     // 計算紅蘿蔔
-    const today = todayStr();
     const allClaims = await dbGetAll('claims');
-    const todayClaims = allClaims.filter(c => c.c_date === today);
+    const todayClaims = allClaims.filter(c => c.c_date === dateStr);
     const pct = calcClaimsProgress(todayClaims);
     const carrots = calcLearningCarrots(pct);
 
@@ -328,7 +336,7 @@ async function _completeQuest(claim, claimLabelEl, claimListEl, heatCardEl, date
     while (claimListEl.firstChild) claimListEl.removeChild(claimListEl.firstChild);
     const skills = await dbGetAll('skills');
     const quests = await dbGetAll('quests');
-    await _loadLearningData(claimLabelEl, claimListEl, heatCardEl, dateBarEl);
+    await _loadLearningData(claimLabelEl, claimListEl, heatCardEl, dateBarEl, dateStr);
   } catch (err) {
     console.warn('完成 Quest 失敗:', err);
   }

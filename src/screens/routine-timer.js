@@ -29,6 +29,9 @@ function createTimerState(steps) {
     // 是否為重做模式（單一 step）
     redoMode: false,
     redoStepIdx: -1,
+    // 計時追蹤：記錄實際開始時間，完成後算出總耗時
+    startedAt: null,
+    elapsedSeconds: 0,
   };
 }
 
@@ -205,21 +208,37 @@ export function renderRoutineTimer(root, params = {}, opts = {}) {
       countdown.style.color = 'var(--violet)';
       bgOverlay.style.background = '';
       lastFiveHint.style.visibility = 'hidden';
+      // 清除前一 step 可能殘留的閃爍
+      countdown.classList.remove('lori-routine-timer__countdown--blink-slow', 'lori-routine-timer__countdown--blink-fast');
+      bgOverlay.classList.remove('lori-routine-timer__bg--pulse-slow', 'lori-routine-timer__bg--pulse-fast');
     } else if (state.phase === 'countdown') {
       phaseLabel.textContent = '當前 step';
       phaseLabel.style.color = 'var(--gray)';
       countdown.textContent = formatTime(state.remainingSeconds);
       countdown.style.color = 'var(--navy)';
 
-      // 最後 5 秒視覺提示
+      // 最後 5 秒視覺提示 + 閃爍動畫
       if (state.remainingSeconds <= 5 && state.remainingSeconds > 0) {
-        lastFiveHint.textContent = '● 最後 5 秒';
+        lastFiveHint.textContent = `● 最後 ${state.remainingSeconds} 秒`;
         lastFiveHint.style.visibility = 'visible';
         bgOverlay.style.background = `radial-gradient(circle at 50% 38%, rgba(244,132,95,${0.05 + (5 - state.remainingSeconds) * 0.03}), rgba(250,248,243,0) 70%)`;
         countdown.style.color = 'var(--carrot)';
+
+        // 閃爍頻率：5→3 秒慢閃，2→1 秒快閃
+        countdown.classList.remove('lori-routine-timer__countdown--blink-slow', 'lori-routine-timer__countdown--blink-fast');
+        bgOverlay.classList.remove('lori-routine-timer__bg--pulse-slow', 'lori-routine-timer__bg--pulse-fast');
+        if (state.remainingSeconds <= 2) {
+          countdown.classList.add('lori-routine-timer__countdown--blink-fast');
+          bgOverlay.classList.add('lori-routine-timer__bg--pulse-fast');
+        } else {
+          countdown.classList.add('lori-routine-timer__countdown--blink-slow');
+          bgOverlay.classList.add('lori-routine-timer__bg--pulse-slow');
+        }
       } else {
         lastFiveHint.style.visibility = 'hidden';
         bgOverlay.style.background = '';
+        countdown.classList.remove('lori-routine-timer__countdown--blink-slow', 'lori-routine-timer__countdown--blink-fast');
+        bgOverlay.classList.remove('lori-routine-timer__bg--pulse-slow', 'lori-routine-timer__bg--pulse-fast');
       }
     } else if (state.phase === 'waiting') {
       phaseLabel.textContent = '時間到！';
@@ -228,6 +247,9 @@ export function renderRoutineTimer(root, params = {}, opts = {}) {
       countdown.style.color = 'var(--carrot)';
       bgOverlay.style.background = 'radial-gradient(circle at 50% 38%, rgba(244,132,95,0.12), rgba(250,248,243,0) 70%)';
       lastFiveHint.style.visibility = 'hidden';
+      // 清除閃爍
+      countdown.classList.remove('lori-routine-timer__countdown--blink-slow', 'lori-routine-timer__countdown--blink-fast');
+      bgOverlay.classList.remove('lori-routine-timer__bg--pulse-slow', 'lori-routine-timer__bg--pulse-fast');
     } else if (state.phase === 'done') {
       // 導航到摘要頁
       _cleanup();
@@ -240,6 +262,7 @@ export function renderRoutineTimer(root, params = {}, opts = {}) {
           blockName: state.blockName,
           results: state.results,
           steps: state.steps.map(s => ({ s_name: s.s_name, s_time: s.s_time, s_index: s.s_index })),
+          elapsedSeconds: state.elapsedSeconds || 0,
         };
         sessionStorage.setItem('routine_result', JSON.stringify(resultData));
         navigate(`#/routine/summary/${blockIndex}`);
@@ -346,9 +369,18 @@ function _updateProgressSegments(container, state) {
 function _startStep(state, updateUI) {
   const idx = state.currentStepIdx;
   if (idx >= state.steps.length) {
+    // 計算總耗時
+    if (state.startedAt) {
+      state.elapsedSeconds = Math.round((Date.now() - state.startedAt) / 1000);
+    }
     state.phase = 'done';
     updateUI();
     return;
+  }
+
+  // 第一個 step 開始時記錄起始時間
+  if (idx === 0 && !state.startedAt) {
+    state.startedAt = Date.now();
   }
 
   const step = state.steps[idx];

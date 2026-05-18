@@ -5,7 +5,7 @@ import { createStatusBar } from '../components/status-bar.js';
 import { createHeaderBar } from '../components/header-bar.js';
 import { navigate } from '../router.js';
 import { dbGetAll } from '../db.js';
-import { getEncouragement, formatDateDisplay } from '../utils/helpers.js';
+import { getEncouragement, formatDateDisplay, silentCatch } from '../utils/helpers.js';
 
 // ===== 資料讀取 =====
 
@@ -25,7 +25,7 @@ async function getDetailCompletion(dateStr) {
       todoPct = done / todos.length;
       todoCount = `${done} / ${todos.length}`;
     }
-  } catch { /* 無資料 */ }
+  } catch(e) { silentCatch(e, 'progress detail todo pct'); }
 
   // Routine 完成率
   let routinePct = 0;
@@ -37,7 +37,7 @@ async function getDetailCompletion(dateStr) {
       routinePct = dayRec.routine_pct;
       routineCount = `${Math.round(routinePct * 100)}% 完成`;
     }
-  } catch { /* 無資料 */ }
+  } catch(e) { silentCatch(e, 'progress detail routine pct'); }
 
   // 學習完成率
   let learningPct = 0;
@@ -50,7 +50,7 @@ async function getDetailCompletion(dateStr) {
       learningPct = total > 0 ? actual / total : 0;
       learningCount = `Day Quest ${Math.round(learningPct * 100)}%`;
     }
-  } catch { /* 無資料 */ }
+  } catch(e) { silentCatch(e, 'progress detail learning pct'); }
 
   const overall = (todoPct + routinePct + learningPct) / 3;
 
@@ -308,7 +308,8 @@ async function _loadDetailData(dateStr, overallNumText, overallFillEl, barsConta
     try {
       const msg = await getEncouragement('daily');
       encourageEl.textContent = `「${msg}」`;
-    } catch {
+    } catch(e) {
+      silentCatch(e, 'progress detail encouragement');
       encourageEl.textContent = '「每一步都算數。」';
     }
   } catch (err) {

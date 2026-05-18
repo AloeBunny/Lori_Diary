@@ -116,6 +116,7 @@ begin of t_block,
   b_index type i,          "索引碼(PK)
   b_name  type string,     "block名稱(必填)
   b_rise  type char4,      "偵測ON時間(空=一次性)
+  b_start type char4,      "計時起算時間(步驟規劃基準，可與rise不同)
   b_set   type char4,      "偵測OFF時間(空=一次性)
 end of t_block.
 
@@ -233,7 +234,7 @@ end of t_step.
 ### 元件
 - 左上退出按鈕 / 右上存檔按鈕
 - Play 按鈕 → 直接進入 1301 計時
-- Block 屬性可編輯：名稱、block-rise、block-set
+- Block 屬性可編輯：名稱、block-rise、計時起算、block-set
 - 下方 [STEP_BAR] 按鈕 → 進入 1311 Step 列表
 
 ---
@@ -311,6 +312,7 @@ begin of t_quest,
   q_total  type i,         "總量(無序任務填0)
   q_done   type i,         "已完成量
   q_seq    type i,         "排序(>0=有序, 0=無序/重複型)
+  q_freq   type string,    "頻率(每日/每週/每月/不限)
 end of t_quest.
 
 * Daily Claim（每日認領）
@@ -385,7 +387,7 @@ end of t_claim.
 
 ### 元件
 - 左上退出按鈕 / 右上存檔按鈕
-- Quest 屬性可編輯：名稱、單位、總量、排序（有序/無序）
+- Quest 屬性可編輯：名稱、單位、總量、排序（有序/無序）、頻率（每日/每週/每月/不限）
 
 ---
 

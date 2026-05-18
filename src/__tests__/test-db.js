@@ -25,6 +25,7 @@ test('晨間 Block 設定正確', () => {
   assertEqual(morning.b_index, 1);
   assertEqual(morning.b_name, '晨間 Routine');
   assertEqual(morning.b_rise, '0500');
+  assertEqual(morning.b_start, '0530');
   assertEqual(morning.b_set, '0730');
 });
 
@@ -33,6 +34,7 @@ test('晚間 Block 設定正確', () => {
   assertEqual(evening.b_index, 2);
   assertEqual(evening.b_name, '晚間 Routine');
   assertEqual(evening.b_rise, '1800');
+  assertEqual(evening.b_start, '1830');
   assertEqual(evening.b_set, '2230');
 });
 

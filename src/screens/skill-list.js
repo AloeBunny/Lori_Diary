@@ -8,7 +8,7 @@ import { createHeaderBar } from '../components/header-bar.js';
 import { createSkillCard } from '../components/skill-card.js';
 import { createAddBar } from '../components/add-bar.js';
 import { navigate } from '../router.js';
-import { dbGetAll, dbAdd } from '../db.js';
+import { dbGetAll, dbAdd, dbDelete } from '../db.js';
 
 // ===== 色票輪轉 =====
 
@@ -101,6 +101,8 @@ export function renderSkillList(root) {
 
   // cleanup
   return () => {
+    const cards = root.querySelectorAll('.lori-skill-card-wrap');
+    cards.forEach(card => { if (card._swipeCtrl) card._swipeCtrl.destroy(); });
     if (statusBar._cleanup) statusBar._cleanup();
     root.className = '';
   };
@@ -145,6 +147,15 @@ async function _loadSkillData(listContainer) {
         questCount,
         color,
         onClick: (skIdx) => navigate(`#/learning/skills/${skIdx}`),
+        onDelete: async (skIdx) => {
+          if (!confirm(`確定刪除「${skill.sk_name}」？`)) return;
+          try {
+            await dbDelete('skills', skIdx);
+            _loadSkillData(listContainer);
+          } catch (err) {
+            console.warn('技能刪除失敗:', err);
+          }
+        },
       });
       listContainer.appendChild(card);
     });

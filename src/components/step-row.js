@@ -1,9 +1,10 @@
 // 小蘿日誌 — StepRow 元件
-// Step 列表單行：序號 + 名稱 + 時間顯示 + 狀態圖示
+// Step 列表單行：序號 + 名稱 + 時間顯示 + 狀態圖示 + 左滑刪除
 // 用於 1311 Step 列表、1301 計時進行
 
 import { formatTime } from '../utils/helpers.js';
-import { iconCheck, iconSkip } from './icons.js';
+import { iconCheck, iconSkip, iconTrash } from './icons.js';
+import { bindSwipe } from '../utils/swipe.js';
 
 /**
  * 建立 StepRow
@@ -11,15 +12,34 @@ import { iconCheck, iconSkip } from './icons.js';
  * @param {object} opts.step - Step 資料物件 { s_index, s_name, s_time, s_prebuffer }
  * @param {string} opts.status - 狀態：'pending' | 'active' | 'done' | 'skipped'
  * @param {function|null} opts.onClick - 點擊回調 (s_index) => void
+ * @param {function|null} opts.onDelete - 刪除回呼 (s_index) => void
  * @returns {HTMLElement}
  */
 export function createStepRow({
   step = { s_index: 0, s_name: '', s_time: 0, s_prebuffer: 10 },
   status = 'pending',
   onClick = null,
+  onDelete = null,
 } = {}) {
   const { s_index, s_name, s_time, s_prebuffer } = step;
 
+  // ── 外層容器（含刪除區域） ──
+  const wrapper = document.createElement('div');
+  wrapper.className = 'lori-step-row-wrap';
+  wrapper.dataset.stepIndex = String(s_index);
+
+  // ── 刪除按鈕（底層） ──
+  const deleteZone = document.createElement('div');
+  deleteZone.className = 'lori-step-row-wrap__delete';
+  const trashIcon = iconTrash(20);
+  trashIcon.setAttribute('stroke', '#fff');
+  deleteZone.appendChild(trashIcon);
+  deleteZone.addEventListener('click', () => {
+    if (onDelete) onDelete(s_index);
+  });
+  wrapper.appendChild(deleteZone);
+
+  // ── 行本體（滑動層） ──
   const row = document.createElement('div');
   row.className = 'lori-step-row lori-card';
   row.dataset.stepIndex = String(s_index);
@@ -81,5 +101,28 @@ export function createStepRow({
     row.addEventListener('click', () => onClick(s_index));
   }
 
-  return row;
+  wrapper.appendChild(row);
+
+  // ── 左滑手勢 ──
+  const swipeCtrl = bindSwipe({
+    element: wrapper,
+    slider: row,
+    onSwipeLeft: () => {
+      // 滑動打開，使用者點刪除按鈕才真正刪除
+    },
+    threshold: 80,
+  });
+  wrapper._swipeCtrl = swipeCtrl;
+
+  return wrapper;
+}
+
+/**
+ * 銷毀 StepRow（清除 swipe 事件）
+ * @param {HTMLElement} el - createStepRow 回傳的元素
+ */
+export function destroyStepRow(el) {
+  if (el._swipeCtrl) {
+    el._swipeCtrl.destroy();
+  }
 }

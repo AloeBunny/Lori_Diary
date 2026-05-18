@@ -1,8 +1,11 @@
 // 小蘿日誌 — BlockCard 元件
 // Routine Block 卡片：左側色條 + 名稱 + 時間範圍 + step 數 + PillBar 進度
+// 左滑刪除
 // 用於 1310 Block 列表
 
 import { createPillBar } from './pill-bar.js';
+import { iconTrash } from './icons.js';
+import { bindSwipe } from '../utils/swipe.js';
 
 /**
  * 格式化 4 位 HHMM 時間字串為 HH:MM
@@ -23,6 +26,7 @@ function _formatHHMM(hhmm) {
  * @param {string} opts.color - 左側色條顏色，預設 var(--mint)
  * @param {boolean} opts.active - 是否為當前選取狀態
  * @param {function|null} opts.onClick - 點擊回調 (b_index) => void
+ * @param {function|null} opts.onDelete - 刪除回呼 (b_index) => void
  * @returns {HTMLElement}
  */
 export function createBlockCard({
@@ -32,11 +36,28 @@ export function createBlockCard({
   color = 'var(--mint)',
   active = false,
   onClick = null,
+  onDelete = null,
 } = {}) {
   const { b_index, b_name, b_rise, b_set } = block;
   const clamped = Math.max(0, Math.min(100, completionPercent));
 
-  // ── 外層容器 ──
+  // ── 外層容器（含刪除區域） ──
+  const wrapper = document.createElement('div');
+  wrapper.className = 'lori-block-card-wrap';
+  wrapper.dataset.blockIndex = String(b_index);
+
+  // ── 刪除按鈕（底層） ──
+  const deleteZone = document.createElement('div');
+  deleteZone.className = 'lori-block-card-wrap__delete';
+  const trashIcon = iconTrash(20);
+  trashIcon.setAttribute('stroke', '#fff');
+  deleteZone.appendChild(trashIcon);
+  deleteZone.addEventListener('click', () => {
+    if (onDelete) onDelete(b_index);
+  });
+  wrapper.appendChild(deleteZone);
+
+  // ── 卡片本體（滑動層） ──
   const card = document.createElement('div');
   card.className = 'lori-block-card lori-card';
   card.dataset.blockIndex = String(b_index);
@@ -118,7 +139,20 @@ export function createBlockCard({
     card.addEventListener('click', () => onClick(b_index));
   }
 
-  return card;
+  wrapper.appendChild(card);
+
+  // ── 左滑手勢 ──
+  const swipeCtrl = bindSwipe({
+    element: wrapper,
+    slider: card,
+    onSwipeLeft: () => {
+      // 滑動打開，使用者點刪除按鈕才真正刪除
+    },
+    threshold: 80,
+  });
+  wrapper._swipeCtrl = swipeCtrl;
+
+  return wrapper;
 }
 
 /**
@@ -136,6 +170,16 @@ export function updateBlockCard(cardEl, percent) {
   // 直接操作 PillBar 內部 fill 元素
   const fill = cardEl.querySelector('.lori-pill-bar__fill');
   if (fill) fill.style.width = `${clamped}%`;
+}
+
+/**
+ * 銷毀 BlockCard（清除 swipe 事件）
+ * @param {HTMLElement} el - createBlockCard 回傳的元素
+ */
+export function destroyBlockCard(el) {
+  if (el._swipeCtrl) {
+    el._swipeCtrl.destroy();
+  }
 }
 
 // 匯出工具函式供測試

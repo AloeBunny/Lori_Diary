@@ -8,7 +8,7 @@ import { createHeaderBar } from '../components/header-bar.js';
 import { createBlockCard } from '../components/block-card.js';
 import { createAddBar } from '../components/add-bar.js';
 import { navigate } from '../router.js';
-import { dbGetAll, dbAdd, dbCount } from '../db.js';
+import { dbGetAll, dbAdd, dbCount, dbDelete } from '../db.js';
 
 // ===== 色票輪轉 =====
 
@@ -86,6 +86,8 @@ export function renderBlockList(root) {
 
   // cleanup
   return () => {
+    const cards = root.querySelectorAll('.lori-block-card-wrap');
+    cards.forEach(card => { if (card._swipeCtrl) card._swipeCtrl.destroy(); });
     if (statusBar._cleanup) statusBar._cleanup();
     root.className = '';
   };
@@ -124,6 +126,15 @@ async function _loadBlockData(listContainer) {
         color: getBlockColor(i),
         active: false,
         onClick: (bIndex) => navigate(`#/routine/blocks/${bIndex}`),
+        onDelete: async (bIndex) => {
+          if (!confirm(`確定刪除「${block.b_name}」？`)) return;
+          try {
+            await dbDelete('blocks', bIndex);
+            _loadBlockData(listContainer);
+          } catch (err) {
+            console.warn('Block 刪除失敗:', err);
+          }
+        },
       });
       listContainer.appendChild(card);
     });

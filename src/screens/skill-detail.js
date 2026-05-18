@@ -8,7 +8,10 @@ import { createHeaderBar } from '../components/header-bar.js';
 import { createFormRow, createNumberStepper } from '../components/form-elements.js';
 import { createAddBar } from '../components/add-bar.js';
 import { navigate } from '../router.js';
-import { dbGet, dbPut, dbGetAll, dbAdd } from '../db.js';
+import { dbGet, dbPut, dbGetAll, dbAdd, dbDelete } from '../db.js';
+import { iconTrash } from '../components/icons.js';
+import { bindSwipe } from '../utils/swipe.js';
+import { todayStr } from '../utils/helpers.js';
 
 // ===== 分類選項 =====
 
@@ -80,6 +83,7 @@ export function renderSkillDetail(root, params = {}) {
   // 狀態
   let _skillData = null;
   let _quests = [];
+  let _todayClaims = []; // 當日認領紀錄
 
   // 表單狀態
   const _form = {
@@ -169,7 +173,6 @@ export function renderSkillDetail(root, params = {}) {
         q_done: 0,
         q_seq: 0,
         q_freq: '每日',
-        q_carrot: 1,
       };
       await dbAdd('quests', newQuest);
 
@@ -195,6 +198,11 @@ export function renderSkillDetail(root, params = {}) {
       // 取得 quests
       _quests = await dbGetAll('quests', 'sk_index', skIndex);
       _quests.sort((a, b) => (a.q_index || 0) - (b.q_index || 0));
+
+      // 取得當日認領紀錄
+      const today = todayStr();
+      const allClaims = await dbGetAll('claims');
+      _todayClaims = allClaims.filter(c => c.c_date === today && c.sk_index === skIndex);
 
       _renderForm(container);
     } catch (err) {
@@ -345,13 +353,39 @@ export function renderSkillDetail(root, params = {}) {
     container.appendChild(questSection);
   }
 
-  // ── 建立 Quest 列表行 ──
+  // ── 建立 Quest 列表行（含左滑刪除） ──
   function _createQuestRow(quest) {
+    // 外層容器（含刪除區域）
+    const wrapper = document.createElement('div');
+    wrapper.className = 'lori-quest-row-wrap';
+
+    // 刪除按鈕（底層）
+    const deleteZone = document.createElement('div');
+    deleteZone.className = 'lori-quest-row-wrap__delete';
+    const trashIcon = iconTrash(20);
+    trashIcon.setAttribute('stroke', '#fff');
+    deleteZone.appendChild(trashIcon);
+    deleteZone.addEventListener('click', async () => {
+      if (!confirm(`確定刪除「${quest.q_name || 'Quest'}」？`)) return;
+      try {
+        await dbDelete('quests', [skillId, quest.q_index]);
+        // 從本地狀態移除並重新渲染
+        _quests = _quests.filter(q => q.q_index !== quest.q_index);
+        _renderForm(formContainer);
+      } catch (err) {
+        console.warn('Quest 刪除失敗:', err);
+      }
+    });
+    wrapper.appendChild(deleteZone);
+
+    // 行本體（滑動層）
     const row = document.createElement('div');
     row.className = 'lori-card lori-skill-detail__quest-row';
 
-    // checkbox
-    let isClaimed = false;
+    // checkbox — 認領寫 DB
+    const existingClaim = _todayClaims.find(c => c.q_index === quest.q_index);
+    let isClaimed = !!existingClaim;
+    let claimRecord = existingClaim || null;
     const checkbox = document.createElement('div');
     checkbox.className = 'lori-skill-detail__quest-checkbox';
 
@@ -369,10 +403,35 @@ export function renderSkillDetail(root, params = {}) {
 
     _renderCheckboxState();
 
-    checkbox.addEventListener('click', (e) => {
+    checkbox.addEventListener('click', async (e) => {
       e.stopPropagation();
-      isClaimed = !isClaimed;
-      _renderCheckboxState();
+      try {
+        if (isClaimed && claimRecord) {
+          // 取消認領：從 DB 刪除
+          await dbDelete('claims', claimRecord.c_index);
+          _todayClaims = _todayClaims.filter(c => c.c_index !== claimRecord.c_index);
+          claimRecord = null;
+          isClaimed = false;
+        } else {
+          // 認領：寫入 DB
+          const today = todayStr();
+          const newClaim = {
+            sk_index: skillId,
+            q_index: quest.q_index,
+            c_date: today,
+            c_target: quest.q_total || 1,
+            c_actual: 0,
+          };
+          const newId = await dbAdd('claims', newClaim);
+          newClaim.c_index = newId;
+          claimRecord = newClaim;
+          _todayClaims.push(newClaim);
+          isClaimed = true;
+        }
+        _renderCheckboxState();
+      } catch (err) {
+        console.warn('認領操作失敗:', err);
+      }
     });
 
     row.appendChild(checkbox);
@@ -399,11 +458,26 @@ export function renderSkillDetail(root, params = {}) {
     });
     row.style.cursor = 'pointer';
 
-    return row;
+    wrapper.appendChild(row);
+
+    // 左滑手勢
+    const swipeCtrl = bindSwipe({
+      element: wrapper,
+      slider: row,
+      onSwipeLeft: () => {
+        // 滑動打開，使用者點刪除按鈕才真正刪除
+      },
+      threshold: 80,
+    });
+    wrapper._swipeCtrl = swipeCtrl;
+
+    return wrapper;
   }
 
   // cleanup
   return () => {
+    const rows = root.querySelectorAll('.lori-quest-row-wrap');
+    rows.forEach(row => { if (row._swipeCtrl) row._swipeCtrl.destroy(); });
     if (statusBar._cleanup) statusBar._cleanup();
     root.className = '';
   };

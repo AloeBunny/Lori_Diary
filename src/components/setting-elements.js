@@ -196,6 +196,8 @@ export function createSlider({
 
   // 拖曳邏輯
   let dragging = false;
+  const ac = new AbortController();
+  const signal = ac.signal;
 
   function updateValue(clientX) {
     const rect = track.getBoundingClientRect();
@@ -213,28 +215,28 @@ export function createSlider({
     e.preventDefault();
     dragging = true;
     updateValue(e.clientX);
-  });
+  }, { signal });
   document.addEventListener('mousemove', (e) => {
     if (!dragging) return;
     e.preventDefault();
     updateValue(e.clientX);
-  });
+  }, { signal });
   document.addEventListener('mouseup', () => {
     dragging = false;
-  });
+  }, { signal });
 
   // 觸控事件
   track.addEventListener('touchstart', (e) => {
     dragging = true;
     updateValue(e.touches[0].clientX);
-  }, { passive: true });
+  }, { passive: true, signal });
   document.addEventListener('touchmove', (e) => {
     if (!dragging) return;
     updateValue(e.touches[0].clientX);
-  }, { passive: true });
+  }, { passive: true, signal });
   document.addEventListener('touchend', () => {
     dragging = false;
-  });
+  }, { signal });
 
   // 提供取值 / 設值方法
   wrap.getValue = () => wrap._value;
@@ -244,6 +246,9 @@ export function createSlider({
     fill.style.width = `${clamped}%`;
     thumb.style.left = `${clamped}%`;
     valEl.textContent = String(clamped);
+  };
+  wrap.destroy = () => {
+    ac.abort();
   };
 
   return wrap;

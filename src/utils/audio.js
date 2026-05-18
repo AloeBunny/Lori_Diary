@@ -3,6 +3,7 @@
 // 音量受 settings store 的四條 slider 控制
 
 import { getSetting } from '../db.js';
+import { silentCatch } from './helpers.js';
 
 // ===== AudioContext 單例 =====
 
@@ -16,8 +17,8 @@ function getAudioContext() {
   if (!_audioCtx) {
     try {
       _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    } catch {
-      // 無 Web Audio 支援
+    } catch(e) {
+      silentCatch(e, 'AudioContext init');
     }
   }
   return _audioCtx;
@@ -86,8 +87,8 @@ export async function playBeep() {
 
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.5);
-  } catch {
-    // 靜默處理
+  } catch(e) {
+    silentCatch(e, 'playBeep');
   }
 }
 
@@ -127,8 +128,8 @@ export async function playComplete() {
     gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
     osc2.start(ctx.currentTime + 0.08);
     osc2.stop(ctx.currentTime + 0.35);
-  } catch {
-    // 靜默處理
+  } catch(e) {
+    silentCatch(e, 'playComplete');
   }
 }
 
@@ -166,8 +167,8 @@ export async function playLevelUp() {
       osc.start(startAt);
       osc.stop(startAt + noteDuration);
     });
-  } catch {
-    // 靜默處理
+  } catch(e) {
+    silentCatch(e, 'playLevelUp');
   }
 }
 

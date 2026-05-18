@@ -1,6 +1,6 @@
 // 小蘿日誌 — Quest 編輯頁（Screen 141B）
 // HeaderBar（存檔）→ FormRow 表單
-// （名稱、單位、總量 NumberStepper、排序方式 Toggle、頻率、紅蘿蔔獎勵 NumberStepper）
+// （名稱、單位、總量 NumberStepper、排序方式 Toggle、頻率）
 // 存檔 → db 更新 → 回 Skill 明細
 
 import { createStatusBar } from '../components/status-bar.js';
@@ -47,7 +47,6 @@ export function renderQuestEdit(root, params = {}) {
     q_total: 0,
     q_seq: 0,      // >0 有序, 0 無序
     q_freq: '每日',
-    q_carrot: 1,
   };
 
   // 狀態列
@@ -103,7 +102,6 @@ export function renderQuestEdit(root, params = {}) {
       q_total: _form.q_total,
       q_seq: _form.q_seq,
       q_freq: _form.q_freq,
-      q_carrot: _form.q_carrot,
     };
 
     try {
@@ -128,7 +126,6 @@ export function renderQuestEdit(root, params = {}) {
       _form.q_total = quest.q_total || 0;
       _form.q_seq = quest.q_seq || 0;
       _form.q_freq = quest.q_freq || '每日';
-      _form.q_carrot = quest.q_carrot || 1;
 
       _renderForm(container);
     } catch (err) {
@@ -221,17 +218,6 @@ export function renderQuestEdit(root, params = {}) {
     });
 
     container.appendChild(createFormRow({ label: '頻率', children: freqSelect }));
-
-    // 紅蘿蔔獎勵（NumberStepper）
-    const carrotStepper = createNumberStepper({
-      value: _form.q_carrot,
-      min: 0,
-      max: 999,
-      step: 1,
-      unit: '🥕',
-      onChange: (v) => { _form.q_carrot = v; },
-    });
-    container.appendChild(createFormRow({ label: '🥕 完成獎勵', children: carrotStepper }));
   }
 
   // cleanup
