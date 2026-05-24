@@ -10,47 +10,9 @@ import { iconSignal, iconBattery } from './icons.js';
  * @returns {HTMLElement}
  */
 export function createStatusBar({ dark = false } = {}) {
-  // PWA standalone 模式下 iOS 已有原生狀態列，不重複渲染
-  const isStandalone = window.navigator.standalone === true
-    || window.matchMedia('(display-mode: standalone)').matches;
-  if (isStandalone) {
-    const placeholder = document.createElement('div');
-    return placeholder;
-  }
-
-  const color = dark ? '#fff' : '#000';
-
-  const bar = document.createElement('div');
-  bar.className = 'status-bar';
-  if (dark) bar.classList.add('status-bar--dark');
-
-  // 左側：時間
-  const timeSpan = document.createElement('span');
-  timeSpan.className = 'status-bar__time';
-  timeSpan.style.color = color;
-  _updateTime(timeSpan);
-
-  // 中間：動態島（Dynamic Island）
-  const island = document.createElement('div');
-  island.className = 'status-bar__island';
-
-  // 右側：訊號 + 電池
-  const rightGroup = document.createElement('div');
-  rightGroup.className = 'status-bar__right';
-  rightGroup.appendChild(iconSignal(color));
-  rightGroup.appendChild(iconBattery(color));
-
-  bar.appendChild(timeSpan);
-  bar.appendChild(island);
-  bar.appendChild(rightGroup);
-
-  // 每分鐘更新時間
-  const timer = setInterval(() => _updateTime(timeSpan), 60000);
-
-  // 回傳 cleanup
-  bar._cleanup = () => clearInterval(timer);
-
-  return bar;
+  // iOS 原生狀態列已提供時間/訊號/電池，不需要假狀態列
+  const placeholder = document.createElement('div');
+  return placeholder;
 }
 
 function _updateTime(el) {
