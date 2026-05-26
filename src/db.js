@@ -1,8 +1,8 @@
 // 小蘿日誌 — IndexedDB 操作模組
-// DB_VERSION 2：新增 blocks, steps, skills, quests, claims, shop_history, settings
+// DB_VERSION 3：新增 daily_mood store（F9/F13/F14 心情記錄）
 
 const DB_NAME = 'lori_diary_db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 // ===== 預設 Block + Step 資料 =====
 const DEFAULT_BLOCKS = [
@@ -65,7 +65,7 @@ function openDB() {
         db.createObjectStore('stats', { keyPath: 'key' });
       }
 
-      // v2 新增 store
+      // v2 新增 store（blocks, steps, skills, quests, claims, shop_history, settings）
       if (oldVersion < 2) {
         // Routine Block
         const blocksStore = db.createObjectStore('blocks', { keyPath: 'b_index' });
@@ -101,6 +101,11 @@ function openDB() {
 
         DEFAULT_BLOCKS.forEach(b => blockStore.put(b));
         DEFAULT_STEPS.forEach(s => stepStore.put(s));
+      }
+
+      // v3 新增 daily_mood store（F9/F13/F14）
+      if (oldVersion < 3) {
+        db.createObjectStore('daily_mood', { keyPath: 'date' });
       }
     };
 
@@ -281,6 +286,34 @@ async function completeAdventure(id) {
   return { record, refund };
 }
 
+// ===== 每日心情 =====
+
+/**
+ * 儲存每日心情（F9/F13/F14）
+ * @param {string} date - YYYY-MM-DD
+ * @param {string} mood - emoji 字元
+ * @param {string} note - 一句話筆記
+ * @param {string[]} tags - 快速標籤陣列
+ */
+async function saveDailyMood(date, mood, note, tags) {
+  await dbPut('daily_mood', {
+    date,
+    mood: mood || '',
+    note: note || '',
+    tags: tags || [],
+    ts: Date.now(),
+  });
+}
+
+/**
+ * 取得指定日期的心情紀錄
+ * @param {string} date - YYYY-MM-DD
+ * @returns {Promise<Object|undefined>}
+ */
+async function getDailyMood(date) {
+  return dbGet('daily_mood', date);
+}
+
 export {
   DB_NAME,
   DB_VERSION,
@@ -299,6 +332,8 @@ export {
   setSetting,
   getMaxSortOrder,
   reorderTodos,
+  saveDailyMood,
+  getDailyMood,
   DEFAULT_BLOCKS,
   DEFAULT_STEPS,
 };

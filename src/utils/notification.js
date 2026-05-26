@@ -232,3 +232,66 @@ export async function syncRoutineReminders(blocks) {
     }
   }
 }
+
+// ===== F12：小蘿先開口——每日主動推播 =====
+
+const _morningPrompts = [
+  '早安！{name} 準備好了嗎？',
+  '起床了嗎？{name} 在等你 🐰',
+  '新的一天！先把 {name} 搞定吧',
+  '早，{name} 不會自己做完的喔',
+  '太陽出來了，{name} 也該開始了 🥕',
+];
+
+const _eveningPrompts = [
+  '回來了嗎？{name} 等你 🐰',
+  '晚上好，{name} 還沒做喔',
+  '辛苦了，來跑 {name} 收個尾吧',
+  '今天也要好好結束——{name} 在這',
+  '{name} 準備好了，你呢？🌙',
+];
+
+/**
+ * 根據 blocks 排程每日主動推播問題
+ * 早上 block → 06:30 推播；晚上 block → 18:30 推播
+ * @param {Array<{b_name: string}>} blocks - Block 清單
+ */
+export async function scheduleDailyPrompts(blocks) {
+  const enabled = await isNotificationEnabled();
+  if (!enabled) return;
+
+  const now = new Date();
+
+  blocks.forEach((block, idx) => {
+    const name = (block.b_name || '').toLowerCase();
+    const isMorning = name.includes('晨') || name.includes('morning');
+    const isEvening = name.includes('晚') || name.includes('夜') || name.includes('evening');
+
+    if (!isMorning && !isEvening) return;
+
+    const target = new Date();
+    if (isMorning) {
+      target.setHours(6, 30, 0, 0);
+    } else {
+      target.setHours(18, 30, 0, 0);
+    }
+
+    // 已過就排到明天
+    if (target <= now) {
+      target.setDate(target.getDate() + 1);
+    }
+
+    const delayMs = target.getTime() - now.getTime();
+    const pool = isMorning ? _morningPrompts : _eveningPrompts;
+    const template = pool[Math.floor(Math.random() * pool.length)];
+    const body = template.replace('{name}', block.b_name);
+
+    const tag = `daily-prompt-${idx}`;
+    scheduleNotification(
+      isMorning ? '小蘿早安 🐰' : '小蘿晚安 🌙',
+      body,
+      delayMs,
+      tag
+    );
+  });
+}

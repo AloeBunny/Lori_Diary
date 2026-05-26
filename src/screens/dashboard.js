@@ -5,7 +5,7 @@ import { createStatusBar } from '../components/status-bar.js';
 import { createTabBar } from '../components/tab-bar.js';
 import { iconGear, iconShop } from '../components/icons.js';
 import { navigate } from '../router.js';
-import { getCarrots, dbGetAll } from '../db.js';
+import { getCarrots, dbGetAll, setSetting } from '../db.js';
 import { todayStr, calcStreak, silentCatch } from '../utils/helpers.js';
 
 // ===== Worker A 元件 placeholder =====
@@ -210,6 +210,11 @@ export function renderDashboard(root) {
 
   body.appendChild(topRight);
 
+  // F10：歡迎卡片插槽
+  const welcomeSlot = document.createElement('div');
+  welcomeSlot.className = 'lori-dashboard__welcome-slot';
+  body.appendChild(welcomeSlot);
+
   // 積分 + 圓環區塊
   const scoreSection = document.createElement('div');
   scoreSection.className = 'lori-dashboard__score';
@@ -285,7 +290,7 @@ export function renderDashboard(root) {
   root.appendChild(tabBar);
 
   // 載入非同步資料
-  _loadDashboardData(carrotNum, ringWrap, heatCard, streakLabel, calSection);
+  _loadDashboardData(carrotNum, ringWrap, heatCard, streakLabel, calSection, welcomeSlot);
 
   // cleanup
   return () => {
@@ -297,7 +302,7 @@ export function renderDashboard(root) {
 /**
  * 非同步載入資料並更新畫面
  */
-async function _loadDashboardData(carrotNumEl, ringWrapEl, heatCardEl, streakLabelEl, calSectionEl) {
+async function _loadDashboardData(carrotNumEl, ringWrapEl, heatCardEl, streakLabelEl, calSectionEl, welcomeSlotEl) {
   try {
     // 紅蘿蔔積分
     const carrots = await getCarrots();
@@ -316,10 +321,47 @@ async function _loadDashboardData(carrotNumEl, ringWrapEl, heatCardEl, streakLab
     // 載入近期紀錄
     const records = await getRecentRecords(112);
 
-    // 計算連續打卡天數
+    // F6：計算打卡統計
     const streak = calcStreak(records);
-    if (streak > 0) {
-      streakLabelEl.textContent = `連續打卡 ${streak} 天`;
+    if (streak.total > 0) {
+      if (streak.gaps > 0) {
+        streakLabelEl.textContent = `連續 ${streak.current} 天（共 ${streak.total} 天，${streak.gaps} 個裂口）`;
+      } else {
+        streakLabelEl.textContent = `連續 ${streak.total} 天 🔥`;
+      }
+    }
+
+    // F10：回歸歡迎卡片
+    // 找到最後一個有打卡的日期，算距今 gap
+    let lastCheckinIdx = -1;
+    for (let i = records.length - 1; i >= 0; i--) {
+      if (records[i].pct > 0) {
+        lastCheckinIdx = i;
+        break;
+      }
+    }
+    if (lastCheckinIdx >= 0 && welcomeSlotEl) {
+      const gap = records.length - 1 - lastCheckinIdx;
+      if (gap >= 2 && !sessionStorage.getItem('lori_welcome_shown')) {
+        const card = document.createElement('div');
+        card.className = 'lori-card lori-dashboard__welcome';
+        const title = document.createElement('div');
+        title.textContent = '你回來了 🐰';
+        card.appendChild(title);
+        const sub = document.createElement('div');
+        sub.style.fontSize = '13px';
+        sub.style.color = 'var(--gray)';
+        sub.style.marginTop = '4px';
+        sub.textContent = `休息了 ${gap} 天也沒關係。慢慢來。`;
+        card.appendChild(sub);
+        welcomeSlotEl.appendChild(card);
+        sessionStorage.setItem('lori_welcome_shown', '1');
+
+        // F10 → F8：回歸自動啟用簡化模式
+        try {
+          await setSetting('simplified_mode', true);
+        } catch(e) { silentCatch(e, 'auto enable simplified_mode'); }
+      }
     }
 
     // 更新熱力圖

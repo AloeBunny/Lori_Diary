@@ -1584,6 +1584,46 @@ body {
   gap: 8px;
 }
 
+/* ===== F7：未完成脈動 / 已完成淡化 ===== */
+
+.lori-block-card--pending {
+  box-shadow: inset 4px 0 0 var(--carrot);
+  animation: lori-pending-pulse 2s ease-in-out infinite;
+}
+
+@keyframes lori-pending-pulse {
+  0%, 100% { box-shadow: inset 4px 0 0 var(--carrot); }
+  50% { box-shadow: inset 4px 0 0 var(--mint); }
+}
+
+.lori-block-card--done {
+  opacity: 0.6;
+}
+
+/* ===== F11：今日建議卡片 ===== */
+
+.lori-routine-home__suggestion {
+  margin: 12px 16px 0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lori-routine-home__suggestion-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.lori-routine-home__suggestion-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
 /* ================================================================
    Screen 1301 — Routine 計時進行
    ================================================================ */
@@ -1867,6 +1907,102 @@ body {
   color: var(--ink-65);
   font-style: italic;
   line-height: 1.7;
+}
+
+/* F9/F13/F14 心情記錄區 */
+
+.lori-routine-summary__mood-section {
+  margin-top: 24px;
+  padding: 0 24px 8px;
+}
+
+.lori-routine-summary__mood-title {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+.lori-routine-summary__mood-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.lori-routine-summary__mood-btn {
+  width: 44px;
+  height: 44px;
+  font-size: 24px;
+  line-height: 44px;
+  text-align: center;
+  border: 2px solid var(--hairline);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.lori-routine-summary__mood-btn.is-selected {
+  border-color: var(--mint);
+  background: rgba(168, 216, 190, 0.2);
+}
+
+.lori-routine-summary__mood-btn:active {
+  transform: scale(0.92);
+}
+
+.lori-routine-summary__tag-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.lori-routine-summary__tag-btn {
+  font-size: 13px;
+  padding: 4px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--ink-65);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.lori-routine-summary__tag-btn.is-selected {
+  background: var(--mint);
+  border-color: var(--mint);
+  color: var(--ink);
+}
+
+.lori-routine-summary__tag-btn:active {
+  transform: scale(0.95);
+}
+
+.lori-routine-summary__mood-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.lori-routine-summary__mood-input:focus {
+  border-color: var(--mint);
+}
+
+.lori-routine-summary__mood-input::placeholder {
+  color: var(--ink-45);
 }
 
 .lori-routine-summary__bottom {
@@ -3358,4 +3494,190 @@ body {
   border: 2px dashed rgba(168,216,190,0.55);
   border-radius: 12px;
   transition: height 0.2s ease;
+}
+
+/* ================================================================
+   Routine 日期細節頁
+   ================================================================ */
+
+.lori-routine-detail__date-title {
+  padding: 20px 16px 4px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
+
+.lori-routine-detail__overall {
+  padding: 8px 16px 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.lori-routine-detail__overall-num {
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.lori-routine-detail__overall-unit {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray);
+}
+
+.lori-routine-detail__empty {
+  text-align: center;
+  color: var(--gray);
+  font-size: 15px;
+  padding: 60px 0;
+}
+
+.lori-routine-detail__block-card {
+  margin: 0 16px 12px;
+  padding: 16px;
+}
+
+.lori-routine-detail__card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.lori-routine-detail__block-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lori-routine-detail__block-pct {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--hm-mint, #4DC49A);
+}
+
+.lori-routine-detail__stats-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--gray);
+}
+
+.lori-routine-detail__sep {
+  color: var(--hairline);
+}
+
+.lori-routine-detail__step-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lori-routine-detail__step-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.lori-routine-detail__step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.lori-routine-detail__step-name {
+  flex: 1;
+  font-size: 14px;
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lori-routine-detail__step-badge {
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   Learning 日期細節頁
+   ================================================================ */
+
+.lori-learning-detail__date-title {
+  padding: 20px 16px 4px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
+
+.lori-learning-detail__summary {
+  padding: 8px 16px 16px;
+  font-size: 15px;
+  color: var(--gray);
+  font-weight: 500;
+}
+
+.lori-learning-detail__empty {
+  text-align: center;
+  color: var(--gray);
+  font-size: 15px;
+  padding: 60px 0;
+}
+
+.lori-learning-detail__quest-card {
+  margin: 0 16px 12px;
+  padding: 16px;
+}
+
+.lori-learning-detail__quest-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lori-learning-detail__skill-label {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray);
+  letter-spacing: 0.2px;
+}
+
+.lori-learning-detail__progress-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lori-learning-detail__bar-wrap {
+  flex: 1;
+  height: 8px;
+  border-radius: 8px;
+  background: #EFEBE1;
+  overflow: hidden;
+}
+
+.lori-learning-detail__bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  background: var(--hm-sun, #FFD54F);
+  transition: width 0.3s ease;
+}
+
+.lori-learning-detail__progress-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-65);
+  flex-shrink: 0;
 }

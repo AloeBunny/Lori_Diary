@@ -10,8 +10,8 @@ test('DB_NAME 為 lori_diary_db', () => {
   assertEqual(DB_NAME, 'lori_diary_db');
 });
 
-test('DB_VERSION 為 2', () => {
-  assertEqual(DB_VERSION, 2);
+test('DB_VERSION 為 3', () => {
+  assertEqual(DB_VERSION, 3);
 });
 
 suite('DB — 預設 Block');

@@ -4,9 +4,10 @@
 import { createStatusBar } from '../components/status-bar.js';
 import { iconCheck, iconSkip } from '../components/icons.js';
 import { navigate } from '../router.js';
-import { dbGetAll, dbGet } from '../db.js';
+import { dbGetAll, dbGet, getSetting } from '../db.js';
 import { formatTime } from '../utils/helpers.js';
 import { playBeep } from '../utils/audio.js';
+import { sendNotification } from '../utils/notification.js';
 
 // ===== 計時核心狀態 =====
 
@@ -32,6 +33,13 @@ function createTimerState(steps) {
     // 計時追蹤：記錄實際開始時間，完成後算出總耗時
     startedAt: null,
     elapsedSeconds: 0,
+    // B1：背景計時基準點
+    phaseStartedAt: null,
+    phaseStartDuration: 0,
+    // F1：螢幕常亮
+    wakeLock: null,
+    // visibilitychange 監聽器引用（供 cleanup 移除）
+    _onVisibilityChange: null,
   };
 }
 
@@ -263,6 +271,7 @@ export function renderRoutineTimer(root, params = {}, opts = {}) {
           results: state.results,
           steps: state.steps.map(s => ({ s_name: s.s_name, s_time: s.s_time, s_index: s.s_index })),
           elapsedSeconds: state.elapsedSeconds || 0,
+          simplified: state.simplified || false,
         };
         sessionStorage.setItem('routine_result', JSON.stringify(resultData));
         navigate(`#/routine/summary/${blockIndex}`);
@@ -288,6 +297,16 @@ export function renderRoutineTimer(root, params = {}, opts = {}) {
     if (state && state.autoCompleteTimeoutId) {
       clearTimeout(state.autoCompleteTimeoutId);
       state.autoCompleteTimeoutId = null;
+    }
+    // F1：釋放 Wake Lock
+    if (state && state.wakeLock) {
+      state.wakeLock.release();
+      state.wakeLock = null;
+    }
+    // B1：移除 visibilitychange 監聽
+    if (state && state._onVisibilityChange) {
+      document.removeEventListener('visibilitychange', state._onVisibilityChange);
+      state._onVisibilityChange = null;
     }
     if (statusBar._cleanup) statusBar._cleanup();
   }
@@ -319,7 +338,13 @@ async function _loadAndStart(blockIndex, isRedo, opts) {
     }
 
     const allSteps = await dbGetAll('steps', 'b_index', blockIndex);
-    const steps = allSteps.sort((a, b) => a.s_index - b.s_index);
+    let steps = allSteps.sort((a, b) => a.s_index - b.s_index);
+
+    // F8：簡化模式只跑前 3 個 step
+    const simplifiedMode = await getSetting('simplified_mode', false);
+    if (simplifiedMode) {
+      steps = steps.slice(0, 3);
+    }
 
     if (steps.length === 0) {
       console.error('Block 無 step:', blockIndex);
@@ -328,6 +353,7 @@ async function _loadAndStart(blockIndex, isRedo, opts) {
 
     const state = createTimerState(steps);
     state.blockName = block.b_name;
+    state.simplified = simplifiedMode;
     return state;
   } catch (err) {
     console.error('計時器資料載入失敗:', err);
@@ -378,9 +404,68 @@ function _startStep(state, updateUI) {
     return;
   }
 
-  // 第一個 step 開始時記錄起始時間
+  // 第一個 step 開始時記錄起始時間 + 請求 Wake Lock + 註冊 visibilitychange
   if (idx === 0 && !state.startedAt) {
     state.startedAt = Date.now();
+
+    // F1：請求螢幕常亮
+    if ('wakeLock' in navigator) {
+      navigator.wakeLock.request('screen').then(lock => {
+        state.wakeLock = lock;
+      }).catch(() => {}); // 權限被拒或不支援時靜默
+    }
+
+    // B1 + F1：visibilitychange 監聽（重算倒數 + 重取 Wake Lock）
+    state._onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // B1：重算 remainingSeconds
+        if (state.phaseStartedAt && (state.phase === 'prebuffer' || state.phase === 'countdown')) {
+          const elapsed = Math.floor((Date.now() - state.phaseStartedAt) / 1000);
+          state.remainingSeconds = Math.max(0, state.phaseStartDuration - elapsed);
+          if (state.remainingSeconds <= 0) {
+            // 時間已到，觸發 phase 轉換
+            if (state.phase === 'prebuffer') {
+              const step = state.steps[state.currentStepIdx];
+              const prebufferOverflow = elapsed - state.phaseStartDuration; // 超過 prebuffer 的秒數
+              const countdownTotal = step.s_time || 0;
+              const countdownRemaining = countdownTotal - prebufferOverflow;
+              if (countdownRemaining <= 0) {
+                // prebuffer + countdown 都已耗盡，直接進 waiting
+                state.phase = 'waiting';
+                state.remainingSeconds = 0;
+                clearInterval(state.intervalId);
+                state.intervalId = null;
+                playBeep();
+                _startAutoComplete(state, updateUI);
+              } else {
+                // 還有 countdown 時間
+                state.phase = 'countdown';
+                state.remainingSeconds = countdownRemaining;
+                state.phaseStartedAt = Date.now();
+                state.phaseStartDuration = countdownRemaining;
+              }
+            } else {
+              // countdown 歸零
+              state.remainingSeconds = 0;
+              state.phase = 'waiting';
+              clearInterval(state.intervalId);
+              state.intervalId = null;
+              playBeep();
+              _startAutoComplete(state, updateUI);
+            }
+          }
+          updateUI();
+        }
+
+        // F1：重新請求 Wake Lock（切出去會自動釋放）
+        if ('wakeLock' in navigator) {
+          navigator.wakeLock.request('screen').then(lock => {
+            state.wakeLock = lock;
+          }).catch(() => {});
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', state._onVisibilityChange);
   }
 
   const step = state.steps[idx];
@@ -389,6 +474,9 @@ function _startStep(state, updateUI) {
   // 進入 prebuffer 階段
   state.phase = 'prebuffer';
   state.remainingSeconds = prebuffer;
+  // B1：記錄 phase 基準點
+  state.phaseStartedAt = Date.now();
+  state.phaseStartDuration = prebuffer;
   updateUI();
 
   // 清除之前的 interval
@@ -399,25 +487,44 @@ function _startStep(state, updateUI) {
 
   state.intervalId = setInterval(() => {
     if (state.phase === 'prebuffer') {
-      state.remainingSeconds--;
+      // B1：用 Date.now() 差值計算，不受瀏覽器暫停影響
+      const elapsed = Math.floor((Date.now() - state.phaseStartedAt) / 1000);
+      state.remainingSeconds = Math.max(0, state.phaseStartDuration - elapsed);
       if (state.remainingSeconds <= 0) {
         // 進入正式倒數
         state.phase = 'countdown';
         state.remainingSeconds = step.s_time || 0;
+        // B1：重設基準點
+        state.phaseStartedAt = Date.now();
+        state.phaseStartDuration = state.remainingSeconds;
         if (state.remainingSeconds <= 0) {
           // step 時間為 0，直接等待
           state.phase = 'waiting';
+          clearInterval(state.intervalId);
+          state.intervalId = null;
           playBeep();
+          // F2：背景時發通知
+          if (document.hidden) {
+            sendNotification('時間到！', `${step.s_name} 完成`, { tag: 'routine-timer' }).catch(() => {});
+          }
           _startAutoComplete(state, updateUI);
         }
       }
       updateUI();
     } else if (state.phase === 'countdown') {
-      state.remainingSeconds--;
+      // B1：用 Date.now() 差值計算
+      const elapsed = Math.floor((Date.now() - state.phaseStartedAt) / 1000);
+      state.remainingSeconds = Math.max(0, state.phaseStartDuration - elapsed);
       if (state.remainingSeconds <= 0) {
         state.remainingSeconds = 0;
         state.phase = 'waiting';
+        clearInterval(state.intervalId);
+        state.intervalId = null;
         playBeep();
+        // F2：背景時發通知
+        if (document.hidden) {
+          sendNotification('時間到！', `${step.s_name} 完成`, { tag: 'routine-timer' }).catch(() => {});
+        }
         _startAutoComplete(state, updateUI);
       }
       updateUI();
@@ -427,18 +534,21 @@ function _startStep(state, updateUI) {
 }
 
 /**
- * 倒數歸零後 5 秒自動完成
+ * 倒數歸零後自動完成（最後一步 5 秒，其餘 3 秒）
  */
 function _startAutoComplete(state, updateUI) {
   if (state.autoCompleteTimeoutId) {
     clearTimeout(state.autoCompleteTimeoutId);
   }
+  // F3：非最後一步 3 秒，最後一步保持 5 秒讓使用者看到完成
+  const isLastStep = state.currentStepIdx >= state.steps.length - 1;
+  const delay = isLastStep ? 5000 : 3000;
   state.autoCompleteTimeoutId = setTimeout(() => {
     if (state.phase === 'waiting') {
       // 自動算完成
       _doComplete(state, updateUI);
     }
-  }, 5000);
+  }, delay);
 }
 
 /**

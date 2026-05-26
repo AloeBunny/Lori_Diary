@@ -46,6 +46,7 @@ await import('./test-backup.js');
 await import('./test-shop-elements.js');
 await import('./test-shop.js');
 await import('./test-notification.js');
+await import('./test-detail-pages.js');
 await import('./test-lori-customize.js');
 await import('./test-pwa.js');
 

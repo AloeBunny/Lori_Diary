@@ -102,20 +102,34 @@ export async function getEncouragement(category) {
 }
 
 /**
- * 計算連續打卡天數（從今天往回算，完成度 > 0 就算一天）
+ * 計算打卡統計（從今天往回算）
  * @param {Array<{date: string, pct: number}>} records - 從舊到新排列
- * @returns {number}
+ * @returns {{total: number, current: number, gaps: number}}
+ *   total   — 過去 N 天中有打卡的天數
+ *   current — 從最後一天往回算的連續打卡天數（遇到 gap 就停）
+ *   gaps    — 裂口數（中間斷掉的天數）
  */
 export function calcStreak(records) {
-  let streak = 0;
+  let current = 0;
   for (let i = records.length - 1; i >= 0; i--) {
     if (records[i].pct > 0) {
-      streak++;
+      current++;
     } else {
       break;
     }
   }
-  return streak;
+
+  let total = 0;
+  let gaps = 0;
+  for (let i = 0; i < records.length; i++) {
+    if (records[i].pct > 0) {
+      total++;
+    } else {
+      gaps++;
+    }
+  }
+
+  return { total, current, gaps };
 }
 
 /**

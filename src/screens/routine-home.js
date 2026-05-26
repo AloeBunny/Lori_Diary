@@ -7,7 +7,7 @@ import { createDateBar } from '../components/date-bar.js';
 import { createBlockCard } from '../components/block-card.js';
 import { iconPlay } from '../components/icons.js';
 import { navigate } from '../router.js';
-import { dbGetAll } from '../db.js';
+import { dbGetAll, getSetting, setSetting } from '../db.js';
 import { formatTime, todayStr, silentCatch, toLocalDateStr, prevDateStr, nextDateStr, parseDate } from '../utils/helpers.js';
 
 // ===== 輔助函式 =====
@@ -125,6 +125,23 @@ export function renderRoutineHome(root, params = {}) {
   hintDiv.textContent = getTimePeriodHint();
   body.appendChild(hintDiv);
 
+  // F8：簡化模式切換
+  const simplifiedToggle = document.createElement('button');
+  simplifiedToggle.className = 'lori-btn lori-btn-ghost lori-routine-home__simplified-toggle';
+  simplifiedToggle.style.margin = '0 16px 8px';
+  simplifiedToggle.style.fontSize = '13px';
+  simplifiedToggle.textContent = '🌧️ 簡化模式';
+  let _simplifiedMode = false;
+  simplifiedToggle.addEventListener('click', async () => {
+    _simplifiedMode = !_simplifiedMode;
+    await setSetting('simplified_mode', _simplifiedMode);
+    simplifiedToggle.classList.toggle('lori-btn-ghost', !_simplifiedMode);
+    simplifiedToggle.classList.toggle('lori-btn-primary', _simplifiedMode);
+    // 重新載入頁面以套用
+    navigate(`#/routine/day/${dateStr}`);
+  });
+  body.appendChild(simplifiedToggle);
+
   // 中央大圓
   const circleWrap = document.createElement('div');
   circleWrap.className = 'lori-routine-home__circle-wrap';
@@ -187,13 +204,19 @@ export function renderRoutineHome(root, params = {}) {
 
   body.appendChild(btnRow);
 
+  // 今日建議卡片（F11）
+  const suggestionCard = document.createElement('div');
+  suggestionCard.className = 'lori-card lori-routine-home__suggestion';
+  suggestionCard.style.display = 'none'; // 載入資料後再顯示
+  body.appendChild(suggestionCard);
+
   // 今日已完成區域
   const completedSection = document.createElement('div');
   completedSection.className = 'lori-routine-home__completed';
 
   const completedTitle = document.createElement('div');
   completedTitle.className = 'lori-routine-home__completed-title';
-  completedTitle.textContent = isToday ? '今日已完成' : '當日已完成';
+  completedTitle.textContent = isToday ? '今日 Routine' : '當日 Routine';
   completedSection.appendChild(completedTitle);
 
   const completedList = document.createElement('div');
@@ -207,7 +230,7 @@ export function renderRoutineHome(root, params = {}) {
   root.appendChild(tabBar);
 
   // 載入資料
-  _loadRoutineData(blockName, timeDisplay, stepCountLabel, playBtn, hintDiv, completedList, dateBar, dateStr, isToday);
+  _loadRoutineData(blockName, timeDisplay, stepCountLabel, playBtn, hintDiv, completedList, dateBar, dateStr, isToday, suggestionCard, simplifiedToggle);
 
   return () => {
     if (statusBar._cleanup) statusBar._cleanup();
@@ -218,8 +241,16 @@ export function renderRoutineHome(root, params = {}) {
 /**
  * 非同步載入 Routine 資料
  */
-async function _loadRoutineData(blockNameEl, timeDisplayEl, stepCountEl, playBtnEl, hintEl, completedListEl, dateBarEl, dateStr, isToday) {
+async function _loadRoutineData(blockNameEl, timeDisplayEl, stepCountEl, playBtnEl, hintEl, completedListEl, dateBarEl, dateStr, isToday, suggestionCardEl, simplifiedToggleEl) {
   try {
+    // F8：讀取簡化模式設定，同步閉包值
+    const simplifiedMode = await getSetting('simplified_mode', false);
+    _simplifiedMode = simplifiedMode;
+    if (simplifiedToggleEl) {
+      simplifiedToggleEl.classList.toggle('lori-btn-ghost', !simplifiedMode);
+      simplifiedToggleEl.classList.toggle('lori-btn-primary', simplifiedMode);
+    }
+
     const blocks = await dbGetAll('blocks');
     const allSteps = await dbGetAll('steps');
     const nowHHMM = currentTimeHHMM();
@@ -236,16 +267,21 @@ async function _loadRoutineData(blockNameEl, timeDisplayEl, stepCountEl, playBtn
     // 找匹配的 block
     const matched = matchBlockByRise(blocks, nowHHMM);
     const selectedBlock = matched || blocks[0];
-    const blockSteps = allSteps
+    const allBlockSteps = allSteps
       .filter(s => s.b_index === selectedBlock.b_index)
       .sort((a, b) => a.s_index - b.s_index);
+    // F8：簡化模式只取前 3 個 step
+    const blockSteps = simplifiedMode ? allBlockSteps.slice(0, 3) : allBlockSteps;
 
     // 更新畫面
     blockNameEl.textContent = selectedBlock.b_name;
     if (blockSteps.length > 0) {
       const firstStepTime = blockSteps[0].s_time || 0;
       timeDisplayEl.textContent = formatTime(firstStepTime);
-      stepCountEl.textContent = `共 ${blockSteps.length} 個 step`;
+      const stepLabel = simplifiedMode
+        ? `前 ${blockSteps.length} 個 step（簡化模式）`
+        : `共 ${blockSteps.length} 個 step`;
+      stepCountEl.textContent = stepLabel;
       playBtnEl.disabled = false;
       playBtnEl.style.opacity = '1';
       playBtnEl.addEventListener('click', () => {
@@ -267,25 +303,49 @@ async function _loadRoutineData(blockNameEl, timeDisplayEl, stepCountEl, playBtn
       hintEl.textContent = `${getTimePeriodHint()} · 無匹配 Block`;
     }
 
-    // 載入當日已完成的 Block 紀錄
+    // 載入當日 Block 紀錄（F7 + F11）
     // 從 records store 查詢該日 routine 完成紀錄
     try {
       const records = await dbGetAll('records');
-      const todayRecords = records.filter(r =>
-        r.date === dateStr && r.type === 'routine' && r.blockIndex !== undefined
-      );
+      // B2 修正：從 day record 的 completedBlocks 陣列查每個 block 的完成度
+      const dayRec = records.find(r => r.date === dateStr && r.type === 'routine');
+      const completedBlocks = (dayRec && dayRec.completedBlocks) || [];
+      const completedBlockMap = new Map();
+      completedBlocks.forEach(cb => {
+        // 同一天同一 block 可能有多筆（redo），取最後一筆
+        completedBlockMap.set(cb.blockIndex, cb);
+      });
+      const completedIndexSet = new Set(completedBlockMap.keys());
 
-      if (todayRecords.length > 0) {
-        for (const rec of todayRecords) {
-          const block = blocks.find(b => b.b_index === rec.blockIndex);
-          if (!block) continue;
-          const bSteps = allSteps.filter(s => s.b_index === rec.blockIndex);
+      // F7：渲染所有 block 卡片，加上 pending / done class
+      if (blocks.length > 0) {
+        for (let i = 0; i < blocks.length; i++) {
+          const block = blocks[i];
+          const bStepsAll = allSteps.filter(s => s.b_index === block.b_index);
+          const bSteps = simplifiedMode ? bStepsAll.slice(0, 3) : bStepsAll;
+          const isDone = completedIndexSet.has(block.b_index);
+          const blockRec = completedBlockMap.get(block.b_index);
+          const pct = isDone && blockRec ? Math.round((blockRec.completionPct || 0) * 100) : 0;
           const card = createBlockCard({
             block,
             stepCount: bSteps.length,
-            completionPercent: Math.round((rec.completionPct || 0) * 100),
+            completionPercent: pct,
             onClick: (bIndex) => navigate(`#/routine/blocks/${bIndex}`),
           });
+          // 加上 F7 CSS class
+          const innerCard = card.querySelector('.lori-block-card');
+          if (innerCard) {
+            innerCard.classList.add(isDone ? 'lori-block-card--done' : 'lori-block-card--pending');
+            // F8：簡化模式標記
+            if (simplifiedMode) {
+              const badge = document.createElement('span');
+              badge.style.fontSize = '11px';
+              badge.style.color = 'var(--gray)';
+              badge.style.marginLeft = '6px';
+              badge.textContent = '簡化模式';
+              innerCard.appendChild(badge);
+            }
+          }
           completedListEl.appendChild(card);
         }
       } else {
@@ -294,8 +354,62 @@ async function _loadRoutineData(blockNameEl, timeDisplayEl, stepCountEl, playBtn
         emptyMsg.style.fontSize = '13px';
         emptyMsg.style.textAlign = 'center';
         emptyMsg.style.padding = '16px 0';
-        emptyMsg.textContent = '今日尚未完成任何 Block';
+        emptyMsg.textContent = '尚無 Block';
         completedListEl.appendChild(emptyMsg);
+      }
+
+      // F11：今日建議卡片
+      if (isToday && blocks.length > 0) {
+        const pendingBlocks = blocks.filter(b => !completedIndexSet.has(b.b_index));
+        suggestionCardEl.innerHTML = '';
+
+        if (pendingBlocks.length === 0) {
+          // 全部完成
+          const label = document.createElement('div');
+          label.className = 'lori-routine-home__suggestion-label';
+          label.textContent = '今日建議';
+          suggestionCardEl.appendChild(label);
+          const nameEl = document.createElement('div');
+          nameEl.className = 'lori-routine-home__suggestion-name';
+          nameEl.textContent = '今天的 routine 全部完成了！';
+          suggestionCardEl.appendChild(nameEl);
+          suggestionCardEl.style.display = '';
+        } else {
+          // 根據時段推薦
+          const hour = new Date().getHours();
+          const isMorning = hour < 12;
+          const morningPattern = /早|晨|morning/i;
+          const eveningPattern = /晚|夜|evening/i;
+
+          let suggested = null;
+          if (isMorning) {
+            suggested = pendingBlocks.find(b => morningPattern.test(b.b_name));
+          } else {
+            suggested = pendingBlocks.find(b => eveningPattern.test(b.b_name));
+          }
+          if (!suggested) {
+            suggested = pendingBlocks[0];
+          }
+
+          const label = document.createElement('div');
+          label.className = 'lori-routine-home__suggestion-label';
+          label.textContent = '今日建議';
+          suggestionCardEl.appendChild(label);
+
+          const nameEl = document.createElement('div');
+          nameEl.className = 'lori-routine-home__suggestion-name';
+          nameEl.textContent = `建議現在做：${suggested.b_name}`;
+          suggestionCardEl.appendChild(nameEl);
+
+          const btn = document.createElement('button');
+          btn.className = 'lori-btn lori-btn-primary';
+          btn.textContent = '開始';
+          btn.addEventListener('click', () => {
+            navigate(`#/routine/timer/${suggested.b_index}`);
+          });
+          suggestionCardEl.appendChild(btn);
+          suggestionCardEl.style.display = '';
+        }
       }
     } catch(e) {
       silentCatch(e, 'routine home completed blocks');

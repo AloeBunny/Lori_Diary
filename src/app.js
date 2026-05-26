@@ -1,7 +1,7 @@
 // 小蘿日誌 — Entry Point
 // ES module，負責初始化 DB、註冊路由、啟動應用
 
-import { getDB } from './db.js';
+import { getDB, dbGetAll } from './db.js';
 import { route, initRouter, navigate, onNotFound, getRootEl } from './router.js';
 import { renderCover } from './screens/cover.js';
 import { renderPlaceholder } from './screens/placeholder.js';
@@ -17,15 +17,18 @@ import { renderBlockEdit } from './screens/block-edit.js';
 import { renderStepList } from './screens/step-list.js';
 import { renderStepEdit } from './screens/step-edit.js';
 import { renderRoutineHistory } from './screens/routine-history.js';
+import { renderRoutineDetail } from './screens/routine-detail.js';
 import { renderSkillList } from './screens/skill-list.js';
 import { renderSkillDetail } from './screens/skill-detail.js';
 import { renderQuestEdit } from './screens/quest-edit.js';
 import { renderLearningHistory } from './screens/learning-history.js';
+import { renderLearningDetail } from './screens/learning-detail.js';
 import { renderLearningHome } from './screens/learning-home.js';
 import { renderQuestClaim } from './screens/quest-claim.js';
 import { renderSettings } from './screens/settings.js';
 import { renderShop } from './screens/shop.js';
 import { renderLoriCustomize } from './screens/lori-customize.js';
+import { syncRoutineReminders, scheduleDailyPrompts } from './utils/notification.js';
 
 // ===== 路由註冊 =====
 function registerRoutes() {
@@ -143,9 +146,9 @@ function registerRoutes() {
     return renderRoutineSummary(getRootEl(), params);
   });
 
-  // Routine 特定日期
-  route('#/routine/:blockId', (params) => {
-    return renderPlaceholder(getRootEl(), `Routine · ${params.blockId}`, { showBack: true, showTabBar: false });
+  // Routine 日期細節（從回顧/進度明細點進來）
+  route('#/routine/:date', (params) => {
+    return renderRoutineDetail(getRootEl(), params);
   });
 
   // 學習主頁（Screen 1400）
@@ -183,9 +186,9 @@ function registerRoutes() {
     return renderSkillDetail(getRootEl(), params);
   });
 
-  // 學習特定日期（進度明細跳轉用，Phase 5 實作）
+  // 學習日期細節（從回顧/進度明細點進來）
   route('#/learning/:date', (params) => {
-    return renderPlaceholder(getRootEl(), `學習 · ${params.date}`, { showBack: true });
+    return renderLearningDetail(getRootEl(), params);
   });
 
   // 小蘿自訂（Screen 1500 子頁）——靜態路由放動態前面
@@ -222,6 +225,17 @@ async function init() {
 
   // 初始化 router
   initRouter(appEl);
+
+  // F12 + Routine 推播：啟動時排程每日提醒
+  try {
+    const blocks = await dbGetAll('blocks');
+    if (blocks && blocks.length > 0) {
+      await syncRoutineReminders(blocks);
+      await scheduleDailyPrompts(blocks);
+    }
+  } catch (e) {
+    console.warn('[小蘿日誌] 推播排程初始化失敗:', e);
+  }
 }
 
 init().catch(err => {
